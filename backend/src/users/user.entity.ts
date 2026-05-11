@@ -29,6 +29,15 @@ export class User {
   @Column({ name: 'grade_level', nullable: true })
   gradeLevel?: string;
 
+  @Column({ name: 'display_name', nullable: true })
+  displayName?: string;
+
+  @Column({ default: false })
+  banned!: boolean;
+
+  @Column({ name: 'last_seen_at', type: 'timestamptz', nullable: true })
+  lastSeenAt?: Date;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

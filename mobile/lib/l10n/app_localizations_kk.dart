@@ -9,7 +9,7 @@ class AppLocalizationsKk extends AppLocalizations {
   AppLocalizationsKk([String locale = 'kk']) : super(locale);
 
   @override
-  String get appName => 'ORTAx';
+  String get appName => 'AljabrA Labs';
 
   @override
   String get splashTagline => 'Білім — өткеннен болашаққа көпір';
@@ -102,6 +102,74 @@ class AppLocalizationsKk extends AppLocalizations {
   String get homeContinueLabel => 'Оқуды жалғастыру';
 
   @override
+  String get homeHeroTitle => 'Әл-Хорезмимен сөйлесу';
+
+  @override
+  String get homeHeroSubtitle =>
+      'Ғылым мен сандар туралы сұрақ қой — ғалымның үнінде жауап аласың.';
+
+  @override
+  String get homeHeroCta => 'Чатқа кіру';
+
+  @override
+  String get homeCategoriesTitle => 'Тақырып таңдау';
+
+  @override
+  String get homePopularTitle => 'Осы аптада танымал';
+
+  @override
+  String get homeSeeAll => 'Барлығы';
+
+  @override
+  String get categoryAll => 'Барлығы';
+
+  @override
+  String get categoryScience => 'Ғылым';
+
+  @override
+  String get categoryNature => 'Табиғат';
+
+  @override
+  String get categorySpace => 'Ғарыш';
+
+  @override
+  String get categoryHistory => 'Тарих';
+
+  @override
+  String get categoryLiterature => 'Әдебиет';
+
+  @override
+  String get journalAbout => 'Журнал туралы';
+
+  @override
+  String get journalExcerpt => 'Журналдан үзінді';
+
+  @override
+  String get journalGallery => 'Журнал беттері';
+
+  @override
+  String get journalBuy => 'Сатып алу';
+
+  @override
+  String get journalAr => 'AR көру';
+
+  @override
+  String get journalArHint => 'Журнал бетіне камераны бағыттаңыз';
+
+  @override
+  String journalPrice(String price) {
+    return '$price ₸';
+  }
+
+  @override
+  String journalPageNumber(int number) {
+    return '$number-бет';
+  }
+
+  @override
+  String get journalBuyToast => 'Сатып алу мүмкіндігі жуырда қосылады';
+
+  @override
   String get tabHome => 'Басты бет';
 
   @override
@@ -145,6 +213,30 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get profileTitle => 'Профиль';
+
+  @override
+  String get profileFont => 'Шрифт';
+
+  @override
+  String get profileFontPreview => 'AljabrA — білім көпірі';
+
+  @override
+  String get profileTextSize => 'Мәтін өлшемі';
+
+  @override
+  String get profileTextSizePreview => 'Аа';
+
+  @override
+  String get profileTheme => 'Тақырып';
+
+  @override
+  String get profileThemeSystem => 'Жүйелік';
+
+  @override
+  String get profileThemeLight => 'Жарық';
+
+  @override
+  String get profileThemeDark => 'Қараңғы';
 
   @override
   String get profileLanguage => 'Тіл';

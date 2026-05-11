@@ -1,6 +1,6 @@
 {
   "@@locale": "kk",
-  "appName": "ORTAx",
+  "appName": "AljabrA Labs",
   "splashTagline": "Білім — өткеннен болашаққа көпір",
   "onboardingSkip": "Өткізу",
   "onboardingNext": "Келесі",
@@ -30,6 +30,37 @@
   "homeSearch": "Іздеу",
   "homeJournalsSection": "Журналдар",
   "homeContinueLabel": "Оқуды жалғастыру",
+  "homeHeroTitle": "Әл-Хорезмимен сөйлесу",
+  "homeHeroSubtitle": "Ғылым мен сандар туралы сұрақ қой — ғалымның үнінде жауап аласың.",
+  "homeHeroCta": "Чатқа кіру",
+  "homeCategoriesTitle": "Тақырып таңдау",
+  "homePopularTitle": "Осы аптада танымал",
+  "homeSeeAll": "Барлығы",
+  "categoryAll": "Барлығы",
+  "categoryScience": "Ғылым",
+  "categoryNature": "Табиғат",
+  "categorySpace": "Ғарыш",
+  "categoryHistory": "Тарих",
+  "categoryLiterature": "Әдебиет",
+  "journalAbout": "Журнал туралы",
+  "journalExcerpt": "Журналдан үзінді",
+  "journalGallery": "Журнал беттері",
+  "journalBuy": "Сатып алу",
+  "journalAr": "AR көру",
+  "journalArHint": "Журнал бетіне камераны бағыттаңыз",
+  "journalPrice": "{price} ₸",
+  "@journalPrice": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "journalPageNumber": "{number}-бет",
+  "@journalPageNumber": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "journalBuyToast": "Сатып алу мүмкіндігі жуырда қосылады",
   "tabHome": "Басты бет",
   "tabJournals": "Журналдар",
   "tabAvatar": "Әл-Хорезми",
@@ -45,6 +76,14 @@
   "messagesTitle": "Хабарламалар",
   "messagesEmpty": "Әзірге хабарламалар жоқ",
   "profileTitle": "Профиль",
+  "profileFont": "Шрифт",
+  "profileFontPreview": "AljabrA — білім көпірі",
+  "profileTextSize": "Мәтін өлшемі",
+  "profileTextSizePreview": "Аа",
+  "profileTheme": "Тақырып",
+  "profileThemeSystem": "Жүйелік",
+  "profileThemeLight": "Жарық",
+  "profileThemeDark": "Қараңғы",
   "profileLanguage": "Тіл",
   "profileLanguageKk": "Қазақша",
   "profileLanguageRu": "Русский",

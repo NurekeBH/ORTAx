@@ -1,0 +1,25 @@
+[Unit]
+Description=ORTAx / AljabrA Labs Backend (NestJS + Telegram bots)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=ortax
+Group=ortax
+WorkingDirectory=/opt/ortax/backend
+EnvironmentFile=/opt/ortax/backend/.env
+ExecStart=/usr/bin/node /opt/ortax/backend/dist/main.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ortax-backend
+# Безопасность
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

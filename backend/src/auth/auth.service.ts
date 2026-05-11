@@ -1,13 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+import { UserRole } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
 import {
+  AdminLoginDto,
   LoginDto,
   RegisterRequestDto,
   ResetPasswordDto,
@@ -35,9 +38,30 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.users.findByPhone(dto.phone);
     if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (user.banned) throw new UnauthorizedException('User is banned');
     const ok = await this.users.verifyPassword(user, dto.password);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
-    return this.signToken(user.id, user.phone);
+    return this.signToken(user.id, user.phone, user.role);
+  }
+
+  async adminLogin(dto: AdminLoginDto) {
+    const user = await this.users.findByPhone(dto.phone);
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (user.banned) throw new UnauthorizedException('User is banned');
+    const ok = await this.users.verifyPassword(user, dto.password);
+    if (!ok) throw new UnauthorizedException('Invalid credentials');
+    if (user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin role required');
+    }
+    return {
+      ...this.signToken(user.id, user.phone, user.role),
+      user: {
+        id: user.id,
+        phone: user.phone,
+        role: user.role,
+        displayName: user.displayName,
+      },
+    };
   }
 
   async requestRegister(dto: RegisterRequestDto) {
@@ -62,7 +86,7 @@ export class AuthService {
     }
     this.pendingRegistrations.delete(dto.phone);
     const user = await this.users.create(pending.phone, pending.password);
-    return this.signToken(user.id, user.phone);
+    return this.signToken(user.id, user.phone, user.role);
   }
 
   async requestReset(phone: string) {
@@ -84,8 +108,8 @@ export class AuthService {
     return { ok: true };
   }
 
-  private signToken(userId: string, phone: string) {
-    const accessToken = this.jwt.sign({ sub: userId, phone });
+  private signToken(userId: string, phone: string, role: UserRole) {
+    const accessToken = this.jwt.sign({ sub: userId, phone, role });
     return { accessToken };
   }
 }

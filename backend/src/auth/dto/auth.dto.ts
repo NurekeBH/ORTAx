@@ -10,6 +10,16 @@ export class LoginDto {
   password!: string;
 }
 
+export class AdminLoginDto {
+  @IsString()
+  @MinLength(3)
+  phone!: string;
+
+  @IsString()
+  @MinLength(6)
+  password!: string;
+}
+
 export class RegisterRequestDto {
   @IsString()
   @Matches(/^\+?[0-9]{10,15}$/, { message: 'phone must be a valid number' })

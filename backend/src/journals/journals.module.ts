@@ -11,5 +11,6 @@ import { Page } from './page.entity';
   imports: [TypeOrmModule.forFeature([Journal, Page, ArAsset])],
   controllers: [JournalsController],
   providers: [JournalsService],
+  exports: [JournalsService, TypeOrmModule],
 })
 export class JournalsModule {}

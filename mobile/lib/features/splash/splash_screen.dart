@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/ortax_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -31,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const Icon(Icons.auto_stories, size: 96, color: AppColors.accent),
             const SizedBox(height: 24),
             Text(
-              'ORTAx',
+              'AljabrA Labs',
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     color: AppColors.textInverse,
                     fontWeight: FontWeight.w800,
@@ -42,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
               'Білім — өткеннен болашаққа көпір',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.accentSoft,
+                    color: context.colors.accentSoft,
                   ),
             ),
             const SizedBox(height: 48),

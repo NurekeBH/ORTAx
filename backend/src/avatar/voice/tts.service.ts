@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 
 export type TtsVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+export type TtsFormat = 'opus' | 'mp3' | 'aac' | 'flac' | 'wav';
 
 @Injectable()
 export class TtsService implements OnModuleInit {
@@ -21,12 +22,12 @@ export class TtsService implements OnModuleInit {
     this.voice = (this.config.get<string>('TTS_VOICE') ?? 'onyx') as TtsVoice;
   }
 
-  async synthesize(text: string): Promise<Buffer> {
+  async synthesize(text: string, format: TtsFormat = 'opus'): Promise<Buffer> {
     const response = await this.client.audio.speech.create({
       model: this.model,
       voice: this.voice,
       input: this.prepareText(text),
-      response_format: 'opus',
+      response_format: format,
       speed: 0.92,
     });
     const arrayBuffer = await response.arrayBuffer();

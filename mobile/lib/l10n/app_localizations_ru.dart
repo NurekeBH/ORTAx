@@ -9,7 +9,7 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appName => 'ORTAx';
+  String get appName => 'AljabrA Labs';
 
   @override
   String get splashTagline => 'Знания — мост из прошлого в будущее';
@@ -102,6 +102,74 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeContinueLabel => 'Продолжить обучение';
 
   @override
+  String get homeHeroTitle => 'Поговори с Аль-Хорезми';
+
+  @override
+  String get homeHeroSubtitle =>
+      'Задай вопрос о науке и числах — получишь ответ голосом учёного.';
+
+  @override
+  String get homeHeroCta => 'Открыть чат';
+
+  @override
+  String get homeCategoriesTitle => 'Выбор темы';
+
+  @override
+  String get homePopularTitle => 'Популярное на этой неделе';
+
+  @override
+  String get homeSeeAll => 'Все';
+
+  @override
+  String get categoryAll => 'Все';
+
+  @override
+  String get categoryScience => 'Наука';
+
+  @override
+  String get categoryNature => 'Природа';
+
+  @override
+  String get categorySpace => 'Космос';
+
+  @override
+  String get categoryHistory => 'История';
+
+  @override
+  String get categoryLiterature => 'Литература';
+
+  @override
+  String get journalAbout => 'О журнале';
+
+  @override
+  String get journalExcerpt => 'Отрывок';
+
+  @override
+  String get journalGallery => 'Страницы журнала';
+
+  @override
+  String get journalBuy => 'Купить';
+
+  @override
+  String get journalAr => 'Открыть AR';
+
+  @override
+  String get journalArHint => 'Наведите камеру на страницу журнала';
+
+  @override
+  String journalPrice(String price) {
+    return '$price ₸';
+  }
+
+  @override
+  String journalPageNumber(int number) {
+    return 'Стр. $number';
+  }
+
+  @override
+  String get journalBuyToast => 'Покупка появится в ближайшее время';
+
+  @override
   String get tabHome => 'Главная';
 
   @override
@@ -146,6 +214,30 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileTitle => 'Профиль';
+
+  @override
+  String get profileFont => 'Шрифт';
+
+  @override
+  String get profileFontPreview => 'AljabrA — мост знаний';
+
+  @override
+  String get profileTextSize => 'Размер текста';
+
+  @override
+  String get profileTextSizePreview => 'Аа';
+
+  @override
+  String get profileTheme => 'Тема';
+
+  @override
+  String get profileThemeSystem => 'Системная';
+
+  @override
+  String get profileThemeLight => 'Светлая';
+
+  @override
+  String get profileThemeDark => 'Тёмная';
 
   @override
   String get profileLanguage => 'Язык';

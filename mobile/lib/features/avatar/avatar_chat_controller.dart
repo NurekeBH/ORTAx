@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'avatar_repository.dart';
@@ -8,7 +12,15 @@ class ChatMessage {
   final ChatRole role;
   final String text;
   final DateTime at;
-  const ChatMessage({required this.role, required this.text, required this.at});
+  final bool isVoice;
+  final Uint8List? audioBytes;
+  const ChatMessage({
+    required this.role,
+    required this.text,
+    required this.at,
+    this.isVoice = false,
+    this.audioBytes,
+  });
 }
 
 class AvatarChatState {
@@ -42,10 +54,50 @@ class AvatarChatState {
 
 class AvatarChatController extends Notifier<AvatarChatState> {
   static const _character = 'khwarizmi';
+  final _player = AudioPlayer();
+  bool _audioContextSet = false;
 
   @override
   AvatarChatState build() {
+    ref.onDispose(_player.dispose);
     return const AvatarChatState();
+  }
+
+  Future<void> _ensureAudioContext() async {
+    if (_audioContextSet) return;
+    try {
+      await AudioPlayer.global.setAudioContext(
+        AudioContext(
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: const {AVAudioSessionOptions.defaultToSpeaker},
+          ),
+          android: const AudioContextAndroid(),
+        ),
+      );
+      _audioContextSet = true;
+    } catch (_) {
+      // best-effort
+    }
+  }
+
+  Future<void> playMessageAudio(ChatMessage msg) async {
+    final bytes = msg.audioBytes;
+    if (bytes == null || bytes.isEmpty) return;
+    await _playBytes(bytes);
+  }
+
+  Future<void> _playBytes(Uint8List bytes) async {
+    try {
+      await _ensureAudioContext();
+      final dir = await Directory.systemTemp.createTemp('ortax_play_');
+      final file = File('${dir.path}/audio.mp3');
+      await file.writeAsBytes(bytes);
+      await _player.stop();
+      await _player.play(DeviceFileSource(file.path));
+    } catch (e) {
+      if (kDebugMode) debugPrint('Audio playback failed: $e');
+    }
   }
 
   Future<void> send(String text) async {
@@ -72,6 +124,53 @@ class AvatarChatController extends Notifier<AvatarChatState> {
         loading: false,
         conversationId: res.conversationId,
       );
+    } catch (e) {
+      state = state.copyWith(loading: false, error: e.toString());
+    }
+  }
+
+  Future<void> sendVoice(File audioFile) async {
+    if (state.loading) return;
+    state = state.copyWith(loading: true, clearError: true);
+
+    try {
+      final repo = ref.read(avatarRepositoryProvider);
+      final res = await repo.askVoice(
+        character: _character,
+        audio: audioFile,
+        conversationId: state.conversationId,
+      );
+
+      final replyAudio = res.audioBytes == null ? null : Uint8List.fromList(res.audioBytes!);
+
+      final newMessages = <ChatMessage>[...state.messages];
+      if (res.transcript.isNotEmpty) {
+        newMessages.add(ChatMessage(
+          role: ChatRole.user,
+          text: res.transcript,
+          at: DateTime.now(),
+          isVoice: true,
+        ));
+      }
+      if (res.reply.isNotEmpty) {
+        newMessages.add(ChatMessage(
+          role: ChatRole.avatar,
+          text: res.reply,
+          at: DateTime.now(),
+          isVoice: replyAudio != null,
+          audioBytes: replyAudio,
+        ));
+      }
+
+      state = state.copyWith(
+        messages: newMessages,
+        loading: false,
+        conversationId: res.conversationId,
+      );
+
+      if (replyAudio != null && replyAudio.isNotEmpty) {
+        await _playBytes(replyAudio);
+      }
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }

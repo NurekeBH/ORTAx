@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'ORTAx';
+  String get appName => 'AljabrA Labs';
 
   @override
   String get splashTagline =>
@@ -102,6 +102,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeContinueLabel => 'Continue learning';
 
   @override
+  String get homeHeroTitle => 'Chat with Al-Khwarizmi';
+
+  @override
+  String get homeHeroSubtitle =>
+      'Ask anything about science and numbers — get an answer in the scholar\'s voice.';
+
+  @override
+  String get homeHeroCta => 'Open chat';
+
+  @override
+  String get homeCategoriesTitle => 'Pick a topic';
+
+  @override
+  String get homePopularTitle => 'Popular this week';
+
+  @override
+  String get homeSeeAll => 'See all';
+
+  @override
+  String get categoryAll => 'All';
+
+  @override
+  String get categoryScience => 'Science';
+
+  @override
+  String get categoryNature => 'Nature';
+
+  @override
+  String get categorySpace => 'Space';
+
+  @override
+  String get categoryHistory => 'History';
+
+  @override
+  String get categoryLiterature => 'Literature';
+
+  @override
+  String get journalAbout => 'About';
+
+  @override
+  String get journalExcerpt => 'Excerpt';
+
+  @override
+  String get journalGallery => 'Pages';
+
+  @override
+  String get journalBuy => 'Buy';
+
+  @override
+  String get journalAr => 'Open AR';
+
+  @override
+  String get journalArHint => 'Point your camera at a journal page';
+
+  @override
+  String journalPrice(String price) {
+    return '$price ₸';
+  }
+
+  @override
+  String journalPageNumber(int number) {
+    return 'Page $number';
+  }
+
+  @override
+  String get journalBuyToast => 'Purchase will be available soon';
+
+  @override
   String get tabHome => 'Home';
 
   @override
@@ -145,6 +213,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTitle => 'Profile';
+
+  @override
+  String get profileFont => 'Font';
+
+  @override
+  String get profileFontPreview => 'AljabrA — bridge of knowledge';
+
+  @override
+  String get profileTextSize => 'Text size';
+
+  @override
+  String get profileTextSizePreview => 'Aa';
+
+  @override
+  String get profileTheme => 'Theme';
+
+  @override
+  String get profileThemeSystem => 'System';
+
+  @override
+  String get profileThemeLight => 'Light';
+
+  @override
+  String get profileThemeDark => 'Dark';
 
   @override
   String get profileLanguage => 'Language';

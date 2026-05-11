@@ -45,6 +45,12 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_svg: ^2.2.4
   intl: any
+  camera: ^0.11.0
+  sensors_plus: ^6.0.1
+  model_viewer_plus: ^1.9.0
+  record: ^6.2.0
+  audioplayers: ^6.6.0
+  permission_handler: ^12.0.1
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +78,32 @@ flutter:
   assets:
     - assets/journal/
     - assets/journal/png/
+    - assets/journal/models/
+
+  fonts:
+    - family: Aronsiki
+      fonts:
+        - asset: assets/fonts/Aronsiki-Regular.ttf
+        - asset: assets/fonts/Aronsiki-Bold.ttf
+          weight: 700
+    - family: Handone
+      fonts:
+        - asset: assets/fonts/Handone-Regular.otf
+        - asset: assets/fonts/Handone-Bold.otf
+          weight: 700
+    - family: Leotaro
+      fonts:
+        - asset: assets/fonts/Leotaro-Regular.otf
+    - family: RowVaticano
+      fonts:
+        - asset: assets/fonts/RowVaticano-Regular.ttf
+        - asset: assets/fonts/RowVaticano-Bold.ttf
+          weight: 700
+    - family: ThanksLab
+      fonts:
+        - asset: assets/fonts/ThanksLab-Regular.ttf
+        - asset: assets/fonts/ThanksLab-Bold.ttf
+          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

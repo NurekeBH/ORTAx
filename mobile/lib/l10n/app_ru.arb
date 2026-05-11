@@ -1,6 +1,6 @@
 {
   "@@locale": "ru",
-  "appName": "ORTAx",
+  "appName": "AljabrA Labs",
   "splashTagline": "Знания — мост из прошлого в будущее",
   "onboardingSkip": "Пропустить",
   "onboardingNext": "Далее",
@@ -30,6 +30,37 @@
   "homeSearch": "Поиск",
   "homeJournalsSection": "Журналы",
   "homeContinueLabel": "Продолжить обучение",
+  "homeHeroTitle": "Поговори с Аль-Хорезми",
+  "homeHeroSubtitle": "Задай вопрос о науке и числах — получишь ответ голосом учёного.",
+  "homeHeroCta": "Открыть чат",
+  "homeCategoriesTitle": "Выбор темы",
+  "homePopularTitle": "Популярное на этой неделе",
+  "homeSeeAll": "Все",
+  "categoryAll": "Все",
+  "categoryScience": "Наука",
+  "categoryNature": "Природа",
+  "categorySpace": "Космос",
+  "categoryHistory": "История",
+  "categoryLiterature": "Литература",
+  "journalAbout": "О журнале",
+  "journalExcerpt": "Отрывок",
+  "journalGallery": "Страницы журнала",
+  "journalBuy": "Купить",
+  "journalAr": "Открыть AR",
+  "journalArHint": "Наведите камеру на страницу журнала",
+  "journalPrice": "{price} ₸",
+  "@journalPrice": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "journalPageNumber": "Стр. {number}",
+  "@journalPageNumber": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "journalBuyToast": "Покупка появится в ближайшее время",
   "tabHome": "Главная",
   "tabJournals": "Журналы",
   "tabAvatar": "Аль-Хорезми",
@@ -45,6 +76,14 @@
   "messagesTitle": "Сообщения",
   "messagesEmpty": "Пока нет уведомлений",
   "profileTitle": "Профиль",
+  "profileFont": "Шрифт",
+  "profileFontPreview": "AljabrA — мост знаний",
+  "profileTextSize": "Размер текста",
+  "profileTextSizePreview": "Аа",
+  "profileTheme": "Тема",
+  "profileThemeSystem": "Системная",
+  "profileThemeLight": "Светлая",
+  "profileThemeDark": "Тёмная",
   "profileLanguage": "Язык",
   "profileLanguageKk": "Қазақша",
   "profileLanguageRu": "Русский",

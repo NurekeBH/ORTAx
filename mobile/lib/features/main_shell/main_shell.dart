@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/ortax_colors.dart';
 import '../../l10n/app_localizations.dart';
 
 class MainShell extends StatelessWidget {
@@ -24,7 +25,7 @@ class MainShell extends StatelessWidget {
             return TextStyle(
               fontSize: 10.5,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
+              color: selected ? AppColors.accent : context.colors.textSecondary,
               height: 1.1,
               overflow: TextOverflow.ellipsis,
             );
@@ -35,32 +36,32 @@ class MainShell extends StatelessWidget {
           onDestinationSelected: _onTap,
           height: 64,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          backgroundColor: AppColors.surface,
-          indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+          backgroundColor: context.colors.surface,
+          indicatorColor: AppColors.accent.withValues(alpha: 0.12),
           destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home_rounded, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.home_rounded, color: AppColors.accent),
             label: t.tabHome,
           ),
           NavigationDestination(
             icon: const Icon(Icons.menu_book_outlined),
-            selectedIcon: const Icon(Icons.menu_book, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.menu_book, color: AppColors.accent),
             label: t.tabJournals,
           ),
           NavigationDestination(
             icon: const Icon(Icons.functions_outlined),
-            selectedIcon: const Icon(Icons.functions, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.functions, color: AppColors.accent),
             label: t.tabAvatar,
           ),
           NavigationDestination(
             icon: const Icon(Icons.notifications_none),
-            selectedIcon: const Icon(Icons.notifications, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.notifications, color: AppColors.accent),
             label: t.tabMessages,
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.person, color: AppColors.accent),
             label: t.tabProfile,
           ),
         ],

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORTAx — Иммерсивті білім беру платформасы</title>
+<meta name="description" content="ORTAx — қазақстандық мектеп оқушыларына арналған AR, AI аватар және VR арқылы жасалған иммерсивті білім беру платформасы." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a14;
+    --bg-2: #11111f;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #f5f5fa;
+    --muted: #9a9ab0;
+    --accent: #7c5cff;
+    --accent-2: #00d4ff;
+    --gradient: linear-gradient(135deg, #7c5cff 0%, #00d4ff 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(800px 600px at 10% -10%, rgba(124,92,255,0.18), transparent 60%),
+      radial-gradient(700px 500px at 100% 10%, rgba(0,212,255,0.12), transparent 60%),
+      radial-gradient(900px 700px at 50% 110%, rgba(124,92,255,0.10), transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+  }
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(10,10,20,0.6);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0;
+  }
+  .logo {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .nav-links { display: flex; gap: 32px; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: transform .2s, box-shadow .2s, opacity .2s;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--gradient);
+    color: white;
+    box-shadow: 0 10px 30px -10px rgba(124,92,255,0.6);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -10px rgba(124,92,255,0.8); }
+  .btn-ghost {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.07); }
+
+  /* Hero */
+  header.hero {
+    padding: 96px 0 80px;
+    text-align: center;
+    position: relative;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .badge .dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; }
+  h1 {
+    font-size: clamp(40px, 7vw, 72px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin-bottom: 24px;
+  }
+  h1 .grad {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 19px);
+    color: var(--muted);
+    max-width: 680px;
+    margin: 0 auto 40px;
+  }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* Sections */
+  section { padding: 100px 0; }
+  .section-head { text-align: center; margin-bottom: 56px; }
+  .section-head .eyebrow {
+    color: var(--accent-2);
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .section-head h2 {
+    font-size: clamp(30px, 4.5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+  }
+  .section-head p { color: var(--muted); max-width: 600px; margin: 0 auto; }
+
+  /* Phases */
+  .phases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    transition: transform .25s, border-color .25s, background .25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--gradient);
+    opacity: 0;
+    transition: opacity .25s;
+    z-index: 0;
+  }
+  .phase:hover { transform: translateY(-4px); border-color: rgba(124,92,255,0.4); }
+  .phase > * { position: relative; z-index: 1; }
+  .phase-num {
+    font-size: 13px; font-weight: 600; color: var(--accent-2);
+    margin-bottom: 16px; letter-spacing: 0.08em;
+  }
+  .phase h3 { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+  .phase p { color: var(--muted); font-size: 15px; }
+  .phase .status {
+    display: inline-block; margin-top: 18px;
+    font-size: 12px; padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    color: var(--muted);
+  }
+  .phase .status.live { background: rgba(74,222,128,0.15); color: #4ade80; }
+
+  /* Features */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feature {
+    padding: 28px;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .feature .icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--gradient);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+    font-size: 22px;
+  }
+  .feature h4 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .feature p { color: var(--muted); font-size: 14px; }
+
+  /* Stats */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    padding: 48px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(124,92,255,0.08), rgba(0,212,255,0.05));
+    border: 1px solid var(--border);
+  }
+  .stat .num {
+    font-size: 40px; font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.02em;
+  }
+  .stat .label { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 72px 32px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(124,92,255,0.16), rgba(0,212,255,0.08));
+    border: 1px solid var(--border);
+  }
+  .cta h2 {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .cta p { color: var(--muted); margin-bottom: 28px; }
+
+  /* Footer */
+  footer {
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  @media (max-width: 860px) {
+    .phases, .features { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    section { padding: 72px 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container nav-inner">
+    <div class="logo">ORTAx</div>
+    <div class="nav-links">
+      <a href="#phases">Фазалар</a>
+      <a href="#features">Мүмкіндіктер</a>
+      <a href="#about">Біз туралы</a>
+      <a href="#contact">Байланыс</a>
+    </div>
+    <a class="btn btn-primary" href="#contact">Бастау</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="badge"><span class="dot"></span> MVP қазір даму үстінде</div>
+    <h1>Болашақ мектеп — <span class="grad">иммерсивті оқыту</span></h1>
+    <p class="hero-sub">
+      ORTAx — қазақстандық оқушыларға арналған AR, AI аватар және VR технологияларын
+      біріктіретін білім беру платформасы. Журналдан VR-кластарға дейін — бір экосистема.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#phases">Платформаны көру</a>
+      <a class="btn btn-ghost" href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<section id="phases">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Roadmap</div>
+      <h2>Үш фазалы платформа</h2>
+      <p>AR-журналдан бастап толық VR кластарға дейін — оқушы үшін бірыңғай иммерсивті орта.</p>
+    </div>
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-num">ФАЗА 01</div>
+        <h3>Mobile AR</h3>
+        <p>Flutter негізіндегі қосымша: журнал беттерін марker арқылы тану және 3D көрсету.</p>
+        <span class="status live">In progress</span>
+      </div>
+      <div class="phase">
+        <div class="phase-num">ФАЗА 02</div>
+        <h3>AI Avatar</h3>
+        <p>Қажықардан, Әл-Хорезми сияқты тарихи тұлғалармен дауыспен сөйлесу — pilot нұсқа.</p>
+        <span class="status">Planned</span>
+      </div>
+      <div class="phase">
+        <div class="phase-num">ФАЗА 03</div>
+        <h3>VR Classroom</h3>
+        <p>Unity + Meta Quest / Pico платформалары. Мектептерге толыққанды deployment.</p>
+        <span class="status">Planned</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Не үшін ORTAx</div>
+      <h2>Оқыту тереңірек, қызықтырақ</h2>
+      <p>Дәстүрлі сабақ форматын иммерсивті тәжірибемен ауыстырамыз.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">📖</div>
+        <h4>Тірі журнал</h4>
+        <p>Қарапайым баспа беті — камераға бағыттаған кезде 3D-ке айналады.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🧠</div>
+        <h4>AI ұстаз</h4>
+        <p>Тарихи тұлғалар — Әл-Фараби, Қожа Ахмет Яссауи — оқушымен қазақша сөйлеседі.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🎧</div>
+        <h4>Дауыс негізді UX</h4>
+        <p>STT + TTS арқылы табиғи диалог. Оқушы жазбайды — сұрайды.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🌐</div>
+        <h4>Үш тілді</h4>
+        <p>Қазақ, орыс және ағылшын тілдеріндегі толық интерфейс пен контент.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🥽</div>
+        <h4>VR класс</h4>
+        <p>Meta Quest / Pico үшін мектептерде тікелей орнатылатын виртуалды кабинеттер.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔒</div>
+        <h4>Қауіпсіз авторизация</h4>
+        <p>Telegram-bot арқылы тіркеу, JWT-ке негізделген backend.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="container">
+    <div class="stats">
+      <div class="stat">
+        <div class="num">3</div>
+        <div class="label">Фаза</div>
+      </div>
+      <div class="stat">
+        <div class="num">3</div>
+        <div class="label">Тіл</div>
+      </div>
+      <div class="stat">
+        <div class="num">10+</div>
+        <div class="label">AR журнал беті</div>
+      </div>
+      <div class="stat">
+        <div class="num">∞</div>
+        <div class="label">Мүмкіндік</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="container">
+    <div class="cta">
+      <h2>Мектебіңізге ORTAx-ты әкелейік</h2>
+      <p>Пилоттық бағдарламаға қосылыңыз немесе командамен байланысыңыз.</p>
+      <a class="btn btn-primary" href="mailto:hello@ortax.kz">hello@ortax.kz</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    © 2026 ORTAx. Қазақстанда жасалған.
+  </div>
+</footer>
+
+</body>
+</html>

@@ -9,6 +9,8 @@ export interface CharacterDefinition {
   systemPrompt: string;
   greeting: string;
   helpText: string;
+  /** ISO-639-1 language hint for STT and replies. Undefined = auto-detect. */
+  language?: string;
 }
 
 export const CHARACTERS: Record<CharacterId, CharacterDefinition> = {
@@ -24,7 +26,8 @@ export const CHARACTERS: Record<CharacterId, CharacterDefinition> = {
     displayName: 'Әл-Хорезми',
     systemPrompt: KHWARIZMI_SYSTEM_PROMPT,
     greeting: KHWARIZMI_GREETING,
-    helpText: 'ORTAx — Әл-Хорезми AI-аватары (математика, алгебра, астрономия).',
+    helpText: 'ORTAx — Әл-Хорезми AI-аватары (математика, алгебра, астрономия). Тек қазақ тілінде.',
+    language: 'kk',
   },
 };
 

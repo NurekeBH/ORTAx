@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appName": "ORTAx",
+  "appName": "AljabrA Labs",
   "splashTagline": "Bridging the past and the future through knowledge",
   "onboardingSkip": "Skip",
   "onboardingNext": "Next",
@@ -30,6 +30,37 @@
   "homeSearch": "Search",
   "homeJournalsSection": "Journals",
   "homeContinueLabel": "Continue learning",
+  "homeHeroTitle": "Chat with Al-Khwarizmi",
+  "homeHeroSubtitle": "Ask anything about science and numbers — get an answer in the scholar's voice.",
+  "homeHeroCta": "Open chat",
+  "homeCategoriesTitle": "Pick a topic",
+  "homePopularTitle": "Popular this week",
+  "homeSeeAll": "See all",
+  "categoryAll": "All",
+  "categoryScience": "Science",
+  "categoryNature": "Nature",
+  "categorySpace": "Space",
+  "categoryHistory": "History",
+  "categoryLiterature": "Literature",
+  "journalAbout": "About",
+  "journalExcerpt": "Excerpt",
+  "journalGallery": "Pages",
+  "journalBuy": "Buy",
+  "journalAr": "Open AR",
+  "journalArHint": "Point your camera at a journal page",
+  "journalPrice": "{price} ₸",
+  "@journalPrice": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "journalPageNumber": "Page {number}",
+  "@journalPageNumber": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
+  "journalBuyToast": "Purchase will be available soon",
   "tabHome": "Home",
   "tabJournals": "Journals",
   "tabAvatar": "Al-Khwarizmi",
@@ -45,6 +76,14 @@
   "messagesTitle": "Messages",
   "messagesEmpty": "No notifications yet",
   "profileTitle": "Profile",
+  "profileFont": "Font",
+  "profileFontPreview": "AljabrA — bridge of knowledge",
+  "profileTextSize": "Text size",
+  "profileTextSizePreview": "Aa",
+  "profileTheme": "Theme",
+  "profileThemeSystem": "System",
+  "profileThemeLight": "Light",
+  "profileThemeDark": "Dark",
   "profileLanguage": "Language",
   "profileLanguageKk": "Қазақша",
   "profileLanguageRu": "Русский",

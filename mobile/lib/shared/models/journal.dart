@@ -5,6 +5,8 @@ class Journal {
   final String subject;
   final String gradeLevel;
   final String? coverAssetPath;
+  final String? excerpt;
+  final int? priceTenge;
   final List<JournalPage> pages;
 
   const Journal({
@@ -14,8 +16,16 @@ class Journal {
     required this.subject,
     required this.gradeLevel,
     this.coverAssetPath,
+    this.excerpt,
+    this.priceTenge,
     required this.pages,
   });
+
+  bool get hasAr => pages.any((p) => p.arMarkerId != null);
+  String? get firstArMarker => pages.firstWhere(
+        (p) => p.arMarkerId != null,
+        orElse: () => const JournalPage(number: 0),
+      ).arMarkerId;
 }
 
 class JournalPage {

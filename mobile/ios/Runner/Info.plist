@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ortax</string>
+	<string>AljabrA Labs</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Камера AR режимде тарихи тұлғаны өз бөлмеңізде көрсету үшін қажет.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Қозғалыс датчиктері AR көрінісінің табиғи қозғалысы үшін қажет.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Микрофон Әл-Хорезмиге дауыспен сұрақ қою үшін қажет.</string>
 </dict>
 </plist>

@@ -15,11 +15,16 @@ export class SttService implements OnModuleInit {
     });
   }
 
-  async transcribe(audio: Buffer, filename = 'voice.ogg'): Promise<string> {
+  async transcribe(
+    audio: Buffer,
+    filename = 'voice.ogg',
+    language?: string,
+  ): Promise<string> {
     const file = await toFile(audio, filename);
     const result = await this.client.audio.transcriptions.create({
       file,
       model: 'whisper-1',
+      ...(language ? { language } : {}),
     });
     return result.text.trim();
   }

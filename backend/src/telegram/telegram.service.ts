@@ -3,15 +3,19 @@ import {
   Logger,
   OnApplicationShutdown,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Input, Telegraf } from 'telegraf';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Input, Telegraf, Context as TelegrafContext } from 'telegraf';
 import { message } from 'telegraf/filters';
 
 import { AvatarService } from '../avatar/avatar.service';
 import { CHARACTERS, CharacterId } from '../avatar/prompts/characters';
 import { SttService } from '../avatar/voice/stt.service';
 import { TtsService } from '../avatar/voice/tts.service';
+import { TelegramUser } from './telegram-user.entity';
 
 interface BotConfig {
   character: CharacterId;
@@ -36,13 +40,92 @@ const BOT_CONFIGS: BotConfig[] = [
 export class TelegramService implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(TelegramService.name);
   private readonly bots: Telegraf[] = [];
+  private readonly botsByCharacter = new Map<CharacterId, Telegraf>();
 
   constructor(
     private readonly config: ConfigService,
     private readonly avatar: AvatarService,
     private readonly stt: SttService,
     private readonly tts: TtsService,
+    @Optional()
+    @InjectRepository(TelegramUser)
+    private readonly tgUsers?: Repository<TelegramUser>,
   ) {}
+
+  getBotByCharacter(character: CharacterId): Telegraf | undefined {
+    return this.botsByCharacter.get(character);
+  }
+
+  async broadcast(
+    character: CharacterId,
+    message: string,
+  ): Promise<{ sent: number; failed: number }> {
+    if (!this.tgUsers) return { sent: 0, failed: 0 };
+    const bot = this.getBotByCharacter(character);
+    if (!bot) throw new Error(`Bot for ${character} is not running`);
+    const users = await this.tgUsers.find({
+      where: { banned: false, lastCharacter: character },
+    });
+    let sent = 0;
+    let failed = 0;
+    for (const u of users) {
+      try {
+        await bot.telegram.sendMessage(u.telegramId, message);
+        sent += 1;
+      } catch (err) {
+        failed += 1;
+        this.logger.warn(
+          `Broadcast to ${u.telegramId} failed: ${(err as Error).message}`,
+        );
+      }
+    }
+    return { sent, failed };
+  }
+
+  private async upsertUser(
+    ctx: TelegrafContext,
+    character: CharacterId,
+  ): Promise<void> {
+    if (!this.tgUsers || !ctx.from) return;
+    try {
+      const existing = await this.tgUsers.findOne({
+        where: { telegramId: String(ctx.from.id) },
+      });
+      if (existing) {
+        existing.username = ctx.from.username;
+        existing.firstName = ctx.from.first_name;
+        existing.lastName = ctx.from.last_name;
+        existing.languageCode = ctx.from.language_code;
+        existing.lastCharacter = character;
+        existing.messageCount = (existing.messageCount ?? 0) + 1;
+        await this.tgUsers.save(existing);
+      } else {
+        await this.tgUsers.save(
+          this.tgUsers.create({
+            telegramId: String(ctx.from.id),
+            username: ctx.from.username,
+            firstName: ctx.from.first_name,
+            lastName: ctx.from.last_name,
+            languageCode: ctx.from.language_code,
+            lastCharacter: character,
+            messageCount: 1,
+          }),
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Failed to upsert TG user: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  private async isBanned(telegramId?: number): Promise<boolean> {
+    if (!this.tgUsers || !telegramId) return false;
+    const u = await this.tgUsers.findOne({
+      where: { telegramId: String(telegramId) },
+    });
+    return !!u?.banned;
+  }
 
   async onModuleInit() {
     if (this.config.get<string>('TELEGRAM_BOT_ENABLED') !== 'true') {
@@ -61,13 +144,28 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
 
       const bot = new Telegraf(token);
       this.registerHandlers(bot, cfg);
+      bot.catch((err) => {
+        this.logger.error(`Bot ${cfg.character} handler error`, err as Error);
+      });
       this.bots.push(bot);
+      this.botsByCharacter.set(cfg.character, bot);
 
-      void bot.launch();
-      const me = await bot.telegram.getMe();
-      this.logger.log(
-        `Telegram bot @${me.username} started (${cfg.character})`,
-      );
+      bot
+        .launch({ dropPendingUpdates: true })
+        .catch((err) =>
+          this.logger.error(`Bot ${cfg.character} polling stopped`, err as Error),
+        );
+      try {
+        const me = await bot.telegram.getMe();
+        this.logger.log(
+          `Telegram bot @${me.username} started (${cfg.character})`,
+        );
+      } catch (err) {
+        this.logger.error(
+          `Bot ${cfg.character} getMe failed`,
+          err as Error,
+        );
+      }
     }
   }
 
@@ -82,6 +180,8 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
     const def = CHARACTERS[character];
 
     bot.start(async (ctx) => {
+      await this.upsertUser(ctx, character);
+      if (await this.isBanned(ctx.from?.id)) return;
       this.avatar.reset(this.conversationId(ctx.from?.id), character);
       await ctx.reply(this.avatar.greeting(character));
     });
@@ -108,12 +208,18 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
 
     bot.on(message('voice'), async (ctx) => {
       try {
+        await this.upsertUser(ctx, character);
+        if (await this.isBanned(ctx.from?.id)) return;
         await ctx.sendChatAction('record_voice');
 
         const fileId = ctx.message.voice.file_id;
         const audio = await this.downloadFile(bot, fileId);
 
-        const transcript = await this.stt.transcribe(audio, 'voice.oga');
+        const transcript = await this.stt.transcribe(
+          audio,
+          'voice.oga',
+          def.language,
+        );
         if (!transcript) {
           await ctx.replyWithVoice(
             Input.fromBuffer(
@@ -133,6 +239,10 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
           this.conversationId(ctx.from?.id),
           character,
           transcript,
+          {
+            source: 'telegram',
+            telegramUserId: ctx.from ? String(ctx.from.id) : undefined,
+          },
         );
         const audioOut = await this.tts.synthesize(reply);
         await ctx.replyWithVoice(Input.fromBuffer(audioOut, cfg.voiceFileName), {
@@ -150,11 +260,17 @@ export class TelegramService implements OnModuleInit, OnApplicationShutdown {
       if (text.startsWith('/')) return;
 
       try {
+        await this.upsertUser(ctx, character);
+        if (await this.isBanned(ctx.from?.id)) return;
         await ctx.sendChatAction('typing');
         const reply = await this.avatar.ask(
           this.conversationId(ctx.from?.id),
           character,
           text,
+          {
+            source: 'telegram',
+            telegramUserId: ctx.from ? String(ctx.from.id) : undefined,
+          },
         );
         await ctx.reply(reply);
       } catch (err) {

@@ -1,0 +1,11 @@
+# 3D models (.glb)
+
+Meshy.ai немесе Tripo3D-тен жасалған кейіпкер модельдері осында сақталады.
+
+Күтілетін файлдар:
+- khwarizmi.glb       — журналдың 1-2 беттері (markerId: khwarizmi-marker-1, -2)
+- farabi.glb          — markerId: farabi-marker-1
+- abai.glb            — markerId: abai-marker-1
+- shoqan.glb          — markerId: shoqan-marker-1
+
+GLB жасау нұсқаулығы: ../../../journal/AR_MODEL_GUIDE.md

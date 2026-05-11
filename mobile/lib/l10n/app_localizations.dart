@@ -103,7 +103,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'ORTAx'**
+  /// **'AljabrA Labs'**
   String get appName;
 
   /// No description provided for @splashTagline.
@@ -280,6 +280,132 @@ abstract class AppLocalizations {
   /// **'Continue learning'**
   String get homeContinueLabel;
 
+  /// No description provided for @homeHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with Al-Khwarizmi'**
+  String get homeHeroTitle;
+
+  /// No description provided for @homeHeroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask anything about science and numbers — get an answer in the scholar\'s voice.'**
+  String get homeHeroSubtitle;
+
+  /// No description provided for @homeHeroCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat'**
+  String get homeHeroCta;
+
+  /// No description provided for @homeCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a topic'**
+  String get homeCategoriesTitle;
+
+  /// No description provided for @homePopularTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular this week'**
+  String get homePopularTitle;
+
+  /// No description provided for @homeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get homeSeeAll;
+
+  /// No description provided for @categoryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get categoryAll;
+
+  /// No description provided for @categoryScience.
+  ///
+  /// In en, this message translates to:
+  /// **'Science'**
+  String get categoryScience;
+
+  /// No description provided for @categoryNature.
+  ///
+  /// In en, this message translates to:
+  /// **'Nature'**
+  String get categoryNature;
+
+  /// No description provided for @categorySpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Space'**
+  String get categorySpace;
+
+  /// No description provided for @categoryHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get categoryHistory;
+
+  /// No description provided for @categoryLiterature.
+  ///
+  /// In en, this message translates to:
+  /// **'Literature'**
+  String get categoryLiterature;
+
+  /// No description provided for @journalAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get journalAbout;
+
+  /// No description provided for @journalExcerpt.
+  ///
+  /// In en, this message translates to:
+  /// **'Excerpt'**
+  String get journalExcerpt;
+
+  /// No description provided for @journalGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages'**
+  String get journalGallery;
+
+  /// No description provided for @journalBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get journalBuy;
+
+  /// No description provided for @journalAr.
+  ///
+  /// In en, this message translates to:
+  /// **'Open AR'**
+  String get journalAr;
+
+  /// No description provided for @journalArHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point your camera at a journal page'**
+  String get journalArHint;
+
+  /// No description provided for @journalPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} ₸'**
+  String journalPrice(String price);
+
+  /// No description provided for @journalPageNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {number}'**
+  String journalPageNumber(int number);
+
+  /// No description provided for @journalBuyToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase will be available soon'**
+  String get journalBuyToast;
+
   /// No description provided for @tabHome.
   ///
   /// In en, this message translates to:
@@ -369,6 +495,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get profileTitle;
+
+  /// No description provided for @profileFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get profileFont;
+
+  /// No description provided for @profileFontPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'AljabrA — bridge of knowledge'**
+  String get profileFontPreview;
+
+  /// No description provided for @profileTextSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get profileTextSize;
+
+  /// No description provided for @profileTextSizePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Aa'**
+  String get profileTextSizePreview;
+
+  /// No description provided for @profileTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get profileTheme;
+
+  /// No description provided for @profileThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get profileThemeSystem;
+
+  /// No description provided for @profileThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get profileThemeLight;
+
+  /// No description provided for @profileThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get profileThemeDark;
 
   /// No description provided for @profileLanguage.
   ///

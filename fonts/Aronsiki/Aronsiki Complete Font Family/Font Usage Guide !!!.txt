@@ -1,0 +1,78 @@
+### **Font Usage Guide for "Aronsiki"**
+
+#### **1. Font Installation**
+
+##### **Windows**
+1. Extract the downloaded font folder.
+2. Right-click on the font file (.OTF or .TTF) and select **Install**.
+3. Alternatively, go to **Control Panel > Fonts** and drag the font file into the Fonts folder.
+
+##### **macOS**
+1. Extract the downloaded font folder.
+2. Double-click the font file (.OTF or .TTF).
+3. Click the **Install Font** button in the window that appears.
+
+##### **Web (WOFF/WOFF2)**
+- For web use, upload the **WOFF** or **WOFF2** file to your web directory and add the following code to your CSS file:
+
+```css
+@font-face {
+    font-family: 'RowVaticano';
+    src: url('path/to/Aronsiki.woff2') format('woff2'),
+         url('path/to/Aronsiki.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+```
+
+Replace `path/to/` with the actual path to your font file.
+
+#### **2. Using OpenType Features**
+
+This font includes OpenType features like **Ligatures** and **Stylistic Sets**. Here’s how to access these features in popular software:
+
+##### **Adobe Illustrator & Photoshop**
+1. Open the **Character Panel** (Window > Type > Character).
+2. Click on the small menu icon at the top-right corner of the panel and select **OpenType**.
+3. Enable or disable features like **Ligatures**, **Stylistic Alternates**, and **Swashes** as needed.
+
+##### **Microsoft Word**
+1. Select the text you want to modify.
+2. Go to the **Home** tab and click **Font Settings** (small arrow in the corner).
+3. Select the **Advanced** tab and enable **Ligatures** to activate ligatures or other styles if supported.
+
+#### **3. Activating Stylistic Sets, Ligatures, and Swashes**
+- **Ligatures**: Ligatures combine specific letter pairs to improve visual appeal. Ligatures are automatically enabled in some design software but can be turned on or off in the OpenType panel.
+- **Swashes**: Swashes add decorative strokes to letters, which can be activated in OpenType-supported design software.
+- **Stylistic Sets**: Stylistic Sets offer variations of certain letters. Select the Stylistic Set option in Adobe software or other design programs that support this feature.
+
+#### **4. Multilingual Support**
+This font supports multiple languages. For a complete character set, refer to the "Specimen" document included in this package.
+
+#### **5. Font File Formats**
+- **OTF** (OpenType Font): Primary format supporting OpenType features.
+- **TTF** (TrueType Font): Standard format for wider compatibility.
+- **WOFF/WOFF2**: Web-optimized format for embedding fonts on websites.
+
+#### **6. Usage License**
+This font is licensed for use according to the terms specified in the **LICENSE.pdf** file included in this package. Please do not redistribute or resell this font.
+
+#### **7. Technical Support**
+If you need further assistance with this font, please contact us at:
+- **Email**: support@authentype.com
+
+_____________________________________________________________________
+
+Keep in touch with us:
+     https://www.authentype.com
+     https://www.behance.net/authentypes     https://www.instagram.com/authen.type/     https://www.facebook.com/authentype
+     https://creativemarket.com/authen.type
+
+_____________________________________________________________________
+
+
+Cheers!!!
+
+
+---
+

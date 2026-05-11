@@ -1,0 +1,65 @@
+
+**Technical Documentation - Row Vaticano**
+
+---
+
+**1. Overview of OpenType Features**
+
+**Row Vaticano** includes several advanced OpenType features that add versatility and enhance the aesthetic appeal of your designs. These features include:
+
+- **Ligatures**: Automatically replaces certain letter combinations (like "ff" and "fi") with custom ligatures for smoother letter flow.
+- **Swashes**: Adds decorative strokes to specific letters for a more elegant look.
+- **Stylistic Sets**: Offers alternative styles for select letters, enabling you to create unique typographic effects.
+
+---
+
+**2. Character Set and Multilingual Support**
+
+Row Vaticano supports a wide range of languages, including (but not limited to):
+- **Western European Languages**: English, French, German, Spanish, Italian, Portuguese, etc.
+- **Central European Languages**: Polish, Czech, Hungarian, Croatian, etc.
+- **Extended Character Set**: Includes accented characters, diacritics, and symbols for full language support.
+
+For a complete list of supported characters, please refer to the "Character Map" section in this document.
+
+---
+
+**3. Accessing Special Glyphs**
+
+##### **In Adobe Illustrator**
+1. Select the **Type Tool** and type your text.
+2. Open the **Glyphs Panel** (Window > Type > Glyphs).
+3. Use the panel to select swashes, ligatures, or stylistic alternates by clicking on the desired glyph.
+
+##### **In Adobe Photoshop**
+1. Type your text and highlight it.
+2. Open the **Character Panel** (Window > Character).
+3. Click the small menu icon at the top-right corner of the panel and select **OpenType** options to enable ligatures or stylistic sets.
+
+##### **In Microsoft Word**
+1. Highlight the text you wish to style.
+2. Go to the **Font Settings** (under the Home tab).
+3. Open the **Advanced** tab and enable **Ligatures** or other OpenType features, if available.
+
+---
+
+**4. Troubleshooting and Support**
+
+If you experience any issues accessing OpenType features or have specific questions about the font, please contact our support team:
+
+- **Email**: support@authentype.com
+_____________________________________________________________________
+
+Keep in touch with us:
+     https://www.authentype.com
+     https://www.behance.net/authentypes     https://www.instagram.com/authen.type/     https://www.facebook.com/authentype
+     https://creativemarket.com/authen.type
+
+_____________________________________________________________________
+
+
+Cheers!!!
+
+
+---
+

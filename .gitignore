@@ -1,41 +1,50 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
-node_modules/
-
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
 # macOS
 .DS_Store
-*.pem
+**/.DS_Store
 
-# local env files
-.env*.local
+# IDE
+.idea/
+*.iml
+.vscode/
 
-# typescript
-*.tsbuildinfo
+# Env / secrets
+.env
+.env.local
+.env.*.local
+key.txt
+keys.txt
+*.key
+secrets/
 
-# generated native folders
-/ios
-/android
+# Logs
+*.log
+npm-debug.log*
+
+# Backend (Node)
+backend/node_modules/
+backend/dist/
+backend/coverage/
+
+# Mobile (Flutter)
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/.pub-cache/
+mobile/.pub/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/android/.gradle/
+mobile/android/app/debug
+mobile/android/app/profile
+mobile/android/app/release
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/.cxx/
+
+# Misc
+*.swp
+*.swo

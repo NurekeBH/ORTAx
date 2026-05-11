@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/data/mock_journals.dart';
-import '../../shared/models/journal.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final journals = mockJournals;
+    final t = AppLocalizations.of(context);
+    final featured = mockJournals.isNotEmpty ? mockJournals.first : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -20,10 +21,6 @@ class HomeScreen extends StatelessWidget {
             icon: const Icon(Icons.notifications_none),
             onPressed: () {},
           ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () {},
-          ),
         ],
       ),
       body: SafeArea(
@@ -31,29 +28,45 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
             Text(
-              'Сәлем!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              t.homeGreeting,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              'Бүгін қандай журналды ашамыз?',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              t.homeSubtitle,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
-            _SearchBar(),
+            if (featured != null)
+              _FeaturedCard(
+                title: featured.title,
+                subtitle: featured.description,
+                imageAsset: featured.coverAssetPath,
+                onTap: () => context.push('/journal/${featured.id}'),
+                continueLabel: t.homeContinueLabel,
+              ),
             const SizedBox(height: 24),
-            Text(
-              'Журналдар',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickTile(
+                    icon: Icons.menu_book,
+                    label: t.tabJournals,
+                    color: AppColors.primary,
+                    onTap: () => context.go('/journals'),
                   ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _QuickTile(
+                    icon: Icons.functions,
+                    label: t.tabAvatar,
+                    color: AppColors.accent,
+                    onTap: () => context.go('/avatar'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            ...journals.map((j) => _JournalCard(journal: j)),
           ],
         ),
       ),
@@ -61,105 +74,87 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: const TextField(
-        decoration: InputDecoration(
-          hintText: 'Іздеу',
-          prefixIcon: Icon(Icons.search),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-        ),
-      ),
-    );
-  }
-}
-
-class _JournalCard extends StatelessWidget {
-  final Journal journal;
-  const _JournalCard({required this.journal});
+class _FeaturedCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String? imageAsset;
+  final VoidCallback onTap;
+  final String continueLabel;
+  const _FeaturedCard({
+    required this.title,
+    required this.subtitle,
+    required this.imageAsset,
+    required this.onTap,
+    required this.continueLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/journal/${journal.id}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              child: AspectRatio(
-                aspectRatio: 16 / 10,
-                child: Container(
-                  color: AppColors.surfaceMuted,
-                  child: journal.coverAssetPath != null
-                      ? Image.asset(
-                          journal.coverAssetPath!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 48,
-                            color: AppColors.textSecondary,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.menu_book,
-                          size: 64,
-                          color: AppColors.primary,
-                        ),
+            AspectRatio(
+              aspectRatio: 16 / 11,
+              child: imageAsset != null
+                  ? Image.asset(
+                      imageAsset!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(color: AppColors.primary),
+                    )
+                  : Container(color: AppColors.primary),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      _Tag(label: journal.subject),
-                      _Tag(label: journal.gradeLevel),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
                   Text(
-                    journal.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                    continueLabel.toUpperCase(),
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    journal.description,
+                    subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.88),
+                      fontSize: 13,
+                      height: 1.3,
+                    ),
                   ),
                 ],
               ),
@@ -171,24 +166,43 @@ class _JournalCard extends StatelessWidget {
   }
 }
 
-class _Tag extends StatelessWidget {
+class _QuickTile extends StatelessWidget {
+  final IconData icon;
   final String label;
-  const _Tag({required this.label});
+  final Color color;
+  final VoidCallback onTap;
+  const _QuickTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ],
         ),
       ),
     );

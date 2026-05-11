@@ -5,9 +5,14 @@ import '../../features/ar/ar_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
+import '../../features/avatar/avatar_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/journal_detail/journal_detail_screen.dart';
+import '../../features/journals/journals_screen.dart';
+import '../../features/main_shell/main_shell.dart';
+import '../../features/messages/messages_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/profile/profile_screen.dart';
 import '../../features/splash/splash_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -22,7 +27,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/reset-password',
         builder: (_, _) => const ResetPasswordScreen(),
       ),
-      GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => MainShell(shell: shell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/journals', builder: (_, _) => const JournalsScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/avatar', builder: (_, _) => const AvatarScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/messages', builder: (_, _) => const MessagesScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
+          ]),
+        ],
+      ),
       GoRoute(
         path: '/journal/:id',
         builder: (_, state) =>

@@ -1,0 +1,26 @@
+[Unit]
+Description=ORTAx Admin Panel (Next.js)
+After=network.target ortax-backend.service
+Wants=ortax-backend.service
+
+[Service]
+Type=simple
+User=ortax
+Group=ortax
+WorkingDirectory=/opt/ortax/admin
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=NEXT_PUBLIC_API_BASE=https://ortax.online/api
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ortax-admin
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

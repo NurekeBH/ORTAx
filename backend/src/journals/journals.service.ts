@@ -1,10 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, ILike, Repository } from 'typeorm';
 
 import { ArAsset } from './ar-asset.entity';
 import { Journal } from './journal.entity';
 import { Page } from './page.entity';
+
+export interface ListJournalsOptions {
+  category?: string;
+  gradeLevel?: string;
+  language?: string;
+  featured?: boolean;
+  published?: boolean;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
 
 @Injectable()
 export class JournalsService {
@@ -17,21 +32,87 @@ export class JournalsService {
     private readonly assets: Repository<ArAsset>,
   ) {}
 
-  list(): Promise<Journal[]> {
+  async list(opts: ListJournalsOptions = {}): Promise<Journal[]> {
+    const where: FindOptionsWhere<Journal> = {};
+    if (opts.published !== undefined) {
+      where.published = opts.published;
+    } else {
+      where.published = true;
+    }
+    if (opts.gradeLevel) where.gradeLevel = opts.gradeLevel;
+    if (opts.language) where.language = opts.language;
+    if (opts.featured !== undefined) where.featured = opts.featured;
+    if (opts.search) where.title = ILike(`%${opts.search}%`);
+    if (opts.category) {
+      where.category = { slug: opts.category };
+    }
     return this.journals.find({
-      where: { published: true },
-      order: { createdAt: 'DESC' },
+      where,
+      relations: { category: true },
+      order: { featured: 'DESC', createdAt: 'DESC' },
     });
   }
 
-  listAll(): Promise<Journal[]> {
-    return this.journals.find({ order: { createdAt: 'DESC' } });
+  async listAll(
+    opts: ListJournalsOptions = {},
+  ): Promise<{ items: Array<Journal & { pagesCount: number }>; total: number }> {
+    const page = Math.max(opts.page ?? 1, 1);
+    const pageSize = Math.min(Math.max(opts.pageSize ?? 50, 1), 200);
+
+    const qb = this.journals
+      .createQueryBuilder('journal')
+      .leftJoinAndSelect('journal.category', 'category')
+      .loadRelationCountAndMap('journal.pagesCount', 'journal.pages')
+      .orderBy('journal.createdAt', 'DESC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+
+    if (opts.published !== undefined) {
+      qb.andWhere('journal.published = :published', {
+        published: opts.published,
+      });
+    }
+    if (opts.gradeLevel) {
+      qb.andWhere('journal.gradeLevel = :grade', { grade: opts.gradeLevel });
+    }
+    if (opts.language) {
+      qb.andWhere('journal.language = :lang', { lang: opts.language });
+    }
+    if (opts.featured !== undefined) {
+      qb.andWhere('journal.featured = :featured', {
+        featured: opts.featured,
+      });
+    }
+    if (opts.search) {
+      qb.andWhere('journal.title ILIKE :search', {
+        search: `%${opts.search}%`,
+      });
+    }
+    if (opts.category) {
+      qb.andWhere('category.slug = :catSlug', { catSlug: opts.category });
+    }
+
+    const [items, total] = await qb.getManyAndCount();
+    return {
+      items: items as Array<Journal & { pagesCount: number }>,
+      total,
+    };
   }
 
   async findOne(id: string): Promise<Journal> {
     const journal = await this.journals.findOne({
       where: { id },
-      relations: { pages: { arAssets: true } },
+      relations: { pages: { arAssets: true }, category: true },
+      order: { pages: { pageNumber: 'ASC' } },
+    });
+    if (!journal) throw new NotFoundException('Journal not found');
+    return journal;
+  }
+
+  async findBySlug(slug: string): Promise<Journal> {
+    const journal = await this.journals.findOne({
+      where: { slug },
+      relations: { pages: { arAssets: true }, category: true },
       order: { pages: { pageNumber: 'ASC' } },
     });
     if (!journal) throw new NotFoundException('Journal not found');
@@ -39,6 +120,13 @@ export class JournalsService {
   }
 
   async createJournal(data: Partial<Journal>): Promise<Journal> {
+    if (data.slug) {
+      const dup = await this.journals.findOne({ where: { slug: data.slug } });
+      if (dup) throw new ConflictException('Slug already exists');
+    }
+    if (data.published && !data.publishedAt) {
+      data.publishedAt = new Date();
+    }
     const journal = this.journals.create(data);
     return this.journals.save(journal);
   }
@@ -46,8 +134,21 @@ export class JournalsService {
   async updateJournal(id: string, data: Partial<Journal>): Promise<Journal> {
     const journal = await this.journals.findOne({ where: { id } });
     if (!journal) throw new NotFoundException('Journal not found');
+    if (data.slug && data.slug !== journal.slug) {
+      const dup = await this.journals.findOne({ where: { slug: data.slug } });
+      if (dup && dup.id !== id) {
+        throw new ConflictException('Slug already exists');
+      }
+    }
+    if (data.published === true && !journal.publishedAt && !data.publishedAt) {
+      data.publishedAt = new Date();
+    }
     Object.assign(journal, data);
     return this.journals.save(journal);
+  }
+
+  async incrementViews(id: string): Promise<void> {
+    await this.journals.increment({ id }, 'viewsCount', 1);
   }
 
   async removeJournal(id: string): Promise<void> {

@@ -194,6 +194,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get avatarSubtitle => 'Отец алгебры — задайте вопрос';
 
   @override
+  String get avatarModeVideo => 'Видео';
+
+  @override
+  String get avatarModeVideoSubtitle => 'Живой видео-аватар';
+
+  @override
+  String get avatarModeChat => 'Чат';
+
+  @override
+  String get avatarModeChatSubtitle => 'Текст и голос';
+
+  @override
   String get avatarHint => 'Спросите Аль-Хорезми…';
 
   @override

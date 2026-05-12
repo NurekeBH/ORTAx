@@ -1,37 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class ResetPasswordScreen extends StatefulWidget {
+import '../../core/theme/colors.dart';
+import 'auth_controller.dart';
+
+class ResetPasswordScreen extends ConsumerStatefulWidget {
   const ResetPasswordScreen({super.key});
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _phoneCtrl = TextEditingController();
   final _otpCtrl = TextEditingController();
   final _newPassCtrl = TextEditingController();
   int _step = 0;
-  bool _loading = false;
 
   Future<void> _next() async {
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      if (_step < 2) {
-        _step++;
-      } else {
-        context.go('/login');
+    final notifier = ref.read(authProvider.notifier);
+    if (_step == 0) {
+      if (_phoneCtrl.text.trim().length < 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Телефон нөмірін дұрыс енгізіңіз')),
+        );
+        return;
       }
-    });
+      final ok = await notifier.requestReset(phone: _phoneCtrl.text.trim());
+      if (!mounted) return;
+      if (ok) {
+        setState(() => _step = 1);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS жіберілді (демо: код 0000)')),
+        );
+      }
+    } else if (_step == 1) {
+      if (_otpCtrl.text.length != 4) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('4 таңбалы кодты енгізіңіз')),
+        );
+        return;
+      }
+      setState(() => _step = 2);
+    } else {
+      if (_newPassCtrl.text.length < 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Кем дегенде 6 таңба')),
+        );
+        return;
+      }
+      final ok = await notifier.resetPassword(
+        phone: _phoneCtrl.text.trim(),
+        otp: _otpCtrl.text.trim(),
+        newPassword: _newPassCtrl.text,
+      );
+      if (!mounted) return;
+      if (ok) context.go('/login');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Құпиясөзді қалпына келтіру')),
       body: SafeArea(
@@ -50,7 +82,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   decoration: const InputDecoration(labelText: 'Телефон', prefixIcon: Icon(Icons.phone)),
                 ),
               ] else if (_step == 1) ...[
-                const Text('SMS-те келген кодты енгізіңіз'),
+                const Text('SMS-те келген кодты енгізіңіз (демо: 0000)'),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _otpCtrl,
@@ -67,10 +99,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   decoration: const InputDecoration(labelText: 'Жаңа құпиясөз', prefixIcon: Icon(Icons.lock_outline)),
                 ),
               ],
+              if (auth.error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  auth.error!,
+                  style: const TextStyle(color: AppColors.error, fontSize: 13),
+                ),
+              ],
               const Spacer(),
               ElevatedButton(
-                onPressed: _loading ? null : _next,
-                child: _loading
+                onPressed: auth.loading ? null : _next,
+                child: auth.loading
                     ? const SizedBox(
                         height: 22,
                         width: 22,

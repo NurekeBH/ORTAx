@@ -194,6 +194,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get avatarSubtitle => 'Father of algebra — ask me anything';
 
   @override
+  String get avatarModeVideo => 'Video';
+
+  @override
+  String get avatarModeVideoSubtitle => 'Talk to the live avatar';
+
+  @override
+  String get avatarModeChat => 'Chat';
+
+  @override
+  String get avatarModeChatSubtitle => 'Text and voice';
+
+  @override
   String get avatarHint => 'Ask Al-Khwarizmi…';
 
   @override

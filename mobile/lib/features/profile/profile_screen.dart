@@ -9,6 +9,7 @@ import '../../core/theme/theme_mode_provider.dart';
 import '../../core/typography/font_provider.dart';
 import '../../core/typography/text_scale_provider.dart';
 import '../../l10n/app_localizations.dart';
+import '../auth/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -76,7 +77,11 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             OutlinedButton.icon(
-              onPressed: () => context.go('/login'),
+              onPressed: () async {
+                await ref.read(authProvider.notifier).logout();
+                if (!context.mounted) return;
+                context.go('/login');
+              },
               icon: const Icon(Icons.logout),
               label: Text(t.profileLogout),
               style: OutlinedButton.styleFrom(

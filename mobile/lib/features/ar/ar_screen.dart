@@ -11,7 +11,18 @@ import 'ar_marker_assets.dart';
 
 class ArScreen extends StatefulWidget {
   final String markerId;
-  const ArScreen({super.key, required this.markerId});
+  final String? modelUrl;
+  final String? imageUrl;
+  final String? title;
+  final String? subtitle;
+  const ArScreen({
+    super.key,
+    required this.markerId,
+    this.modelUrl,
+    this.imageUrl,
+    this.title,
+    this.subtitle,
+  });
 
   @override
   State<ArScreen> createState() => _ArScreenState();
@@ -34,13 +45,36 @@ class _ArScreenState extends State<ArScreen> with WidgetsBindingObserver {
   bool _modelChecked = false;
   bool _modelAvailable = false;
 
-  ArMarkerAsset get _asset =>
-      arMarkerAssets[widget.markerId] ??
-      const ArMarkerAsset(
-        imagePath: 'assets/journal/png/1.png',
-        title: 'AR',
-        subtitle: '',
-      );
+  ArMarkerAsset get _asset {
+    final base = arMarkerAssets[widget.markerId] ??
+        const ArMarkerAsset(
+          imagePath: 'assets/journal/png/1.png',
+          title: 'AR',
+          subtitle: '',
+        );
+    final overrideModel = widget.modelUrl;
+    final overrideImage = widget.imageUrl;
+    if (overrideModel == null &&
+        overrideImage == null &&
+        widget.title == null &&
+        widget.subtitle == null) {
+      return base;
+    }
+    return ArMarkerAsset(
+      imagePath: overrideImage ?? base.imagePath,
+      modelPath: overrideModel ?? base.modelPath,
+      title: widget.title ?? base.title,
+      subtitle: widget.subtitle ?? base.subtitle,
+    );
+  }
+
+  bool get _modelIsNetwork =>
+      (_asset.modelPath ?? '').startsWith('http://') ||
+      (_asset.modelPath ?? '').startsWith('https://');
+
+  bool get _imageIsNetwork =>
+      _asset.imagePath.startsWith('http://') ||
+      _asset.imagePath.startsWith('https://');
 
   @override
   void initState() {
@@ -52,7 +86,10 @@ class _ArScreenState extends State<ArScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _probeModel() async {
-    final available = await hasBundledModel(_asset.modelPath);
+    final modelPath = _asset.modelPath;
+    final available = _modelIsNetwork
+        ? (modelPath != null && modelPath.isNotEmpty)
+        : await hasBundledModel(modelPath);
     if (!mounted) return;
     setState(() {
       _modelAvailable = available;
@@ -258,17 +295,29 @@ class _ArScreenState extends State<ArScreen> with WidgetsBindingObserver {
             ),
           ),
         ),
-        Image.asset(
-          _asset.imagePath,
-          width: targetWidth,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (_, _, _) => const Icon(
-            Icons.image_not_supported_outlined,
-            size: 96,
-            color: Colors.white54,
-          ),
-        ),
+        _imageIsNetwork
+            ? Image.network(
+                _asset.imagePath,
+                width: targetWidth,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.image_not_supported_outlined,
+                  size: 96,
+                  color: Colors.white54,
+                ),
+              )
+            : Image.asset(
+                _asset.imagePath,
+                width: targetWidth,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.image_not_supported_outlined,
+                  size: 96,
+                  color: Colors.white54,
+                ),
+              ),
       ],
     );
   }

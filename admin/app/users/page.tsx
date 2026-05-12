@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 
 import { api, fetcher } from '../../lib/api';
+import { useI18n } from '../../lib/i18n';
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ interface ListResponse {
 const ROLES = ['student', 'teacher', 'admin'] as const;
 
 export default function UsersPage() {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<string>('');
   const [page, setPage] = useState(1);
@@ -58,7 +60,7 @@ export default function UsersPage() {
   }
 
   async function removeUser(id: string) {
-    if (!confirm('Бұл пайдаланушыны жоюды растайсыз ба?')) return;
+    if (!confirm(t('users.confirm_delete'))) return;
     await api(`/admin/users/${id}`, { method: 'DELETE' });
     mutate();
   }
@@ -68,15 +70,17 @@ export default function UsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">Users</h1>
+      <h1 className="text-2xl font-bold text-slate-900">
+        {t('users.title')}
+      </h1>
       <p className="text-sm text-slate-500">
-        Mobile / web users (total: {total})
+        {t('users.subtitle')} ({t('common.total')}: {total})
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <input
           className="input max-w-xs"
-          placeholder="Search by phone…"
+          placeholder={t('users.search_ph')}
           value={search}
           onChange={(e) => {
             setPage(1);
@@ -91,7 +95,7 @@ export default function UsersPage() {
             setRole(e.target.value);
           }}
         >
-          <option value="">All roles</option>
+          <option value="">{t('users.all_roles')}</option>
           {ROLES.map((r) => (
             <option key={r} value={r}>
               {r}
@@ -104,20 +108,22 @@ export default function UsersPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-4 py-2">Phone</th>
-              <th className="px-4 py-2">Role</th>
-              <th className="px-4 py-2">Grade</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2">Last seen</th>
-              <th className="px-4 py-2">Created</th>
-              <th className="px-4 py-2 text-right">Actions</th>
+              <th className="px-4 py-2">{t('users.phone')}</th>
+              <th className="px-4 py-2">{t('users.role')}</th>
+              <th className="px-4 py-2">{t('users.grade')}</th>
+              <th className="px-4 py-2">{t('common.status')}</th>
+              <th className="px-4 py-2">{t('users.last_seen')}</th>
+              <th className="px-4 py-2">{t('common.created')}</th>
+              <th className="px-4 py-2 text-right">
+                {t('common.actions')}
+              </th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
                 <td className="px-4 py-3 text-slate-500" colSpan={7}>
-                  Loading…
+                  {t('common.loading')}
                 </td>
               </tr>
             )}
@@ -142,10 +148,12 @@ export default function UsersPage() {
                 </td>
                 <td className="px-4 py-2">
                   {u.banned ? (
-                    <span className="badge bg-red-100 text-red-700">banned</span>
+                    <span className="badge bg-red-100 text-red-700">
+                      {t('users.banned')}
+                    </span>
                   ) : (
                     <span className="badge bg-emerald-100 text-emerald-700">
-                      active
+                      {t('users.active')}
                     </span>
                   )}
                 </td>
@@ -162,13 +170,13 @@ export default function UsersPage() {
                     className="mr-1 rounded border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50"
                     onClick={() => setBan(u.id, !u.banned)}
                   >
-                    {u.banned ? 'Unban' : 'Ban'}
+                    {u.banned ? t('users.unban') : t('users.ban')}
                   </button>
                   <button
                     className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
                     onClick={() => removeUser(u.id)}
                   >
-                    Delete
+                    {t('common.delete')}
                   </button>
                 </td>
               </tr>
@@ -176,7 +184,7 @@ export default function UsersPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <td className="px-4 py-6 text-center text-slate-500" colSpan={7}>
-                  No users found
+                  {t('users.empty')}
                 </td>
               </tr>
             )}

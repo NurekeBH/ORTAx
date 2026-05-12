@@ -454,6 +454,30 @@ abstract class AppLocalizations {
   /// **'Father of algebra — ask me anything'**
   String get avatarSubtitle;
 
+  /// No description provided for @avatarModeVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get avatarModeVideo;
+
+  /// No description provided for @avatarModeVideoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Talk to the live avatar'**
+  String get avatarModeVideoSubtitle;
+
+  /// No description provided for @avatarModeChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get avatarModeChat;
+
+  /// No description provided for @avatarModeChatSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Text and voice'**
+  String get avatarModeChatSubtitle;
+
   /// No description provided for @avatarHint.
   ///
   /// In en, this message translates to:

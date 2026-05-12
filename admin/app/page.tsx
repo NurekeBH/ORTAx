@@ -3,10 +3,16 @@
 import useSWR from 'swr';
 
 import { fetcher } from '../lib/api';
+import { useI18n } from '../lib/i18n';
 
 interface Overview {
   users: { total: number; dau: number; wau: number; mau: number };
-  content: { journals: number; pages: number; arAssets: number };
+  content: {
+    journals: number;
+    pages: number;
+    arAssets: number;
+    categories?: number;
+  };
   avatar: { messages24h: number; messagesTotal: number };
   telegram: { total: number; banned: number };
 }
@@ -32,6 +38,7 @@ function Stat({
 }
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const { data, error, isLoading } = useSWR<Overview>(
     '/admin/analytics/overview',
     fetcher,
@@ -40,16 +47,15 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-      <p className="text-sm text-slate-500">
-        ORTAx platform overview (auto-refresh: 30s)
-      </p>
+      <h1 className="text-2xl font-bold text-slate-900">{t('dash.title')}</h1>
+      <p className="text-sm text-slate-500">{t('dash.subtitle')}</p>
 
-      {isLoading && <div className="mt-6 text-slate-500">Loading…</div>}
+      {isLoading && (
+        <div className="mt-6 text-slate-500">{t('common.loading')}</div>
+      )}
       {error && (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          Failed to load analytics. Make sure the backend is running and the
-          database is enabled.
+          {t('dash.error')}
         </div>
       )}
 
@@ -57,38 +63,60 @@ export default function DashboardPage() {
         <div className="mt-6 space-y-6">
           <section>
             <h2 className="mb-2 text-sm font-semibold text-slate-700">
-              Users
+              {t('dash.users')}
             </h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <Stat label="Total" value={data.users.total} />
-              <Stat label="DAU" value={data.users.dau} hint="last 24h" />
-              <Stat label="WAU" value={data.users.wau} hint="last 7 days" />
-              <Stat label="MAU" value={data.users.mau} hint="last 30 days" />
+              <Stat label={t('dash.total')} value={data.users.total} />
+              <Stat
+                label={t('dash.dau')}
+                value={data.users.dau}
+                hint={t('dash.last24h')}
+              />
+              <Stat
+                label={t('dash.wau')}
+                value={data.users.wau}
+                hint={t('dash.last7d')}
+              />
+              <Stat
+                label={t('dash.mau')}
+                value={data.users.mau}
+                hint={t('dash.last30d')}
+              />
             </div>
           </section>
 
           <section>
             <h2 className="mb-2 text-sm font-semibold text-slate-700">
-              Content
+              {t('dash.content')}
             </h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              <Stat label="Journals" value={data.content.journals} />
-              <Stat label="Pages" value={data.content.pages} />
-              <Stat label="AR assets" value={data.content.arAssets} />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Stat
+                label={t('dash.categories')}
+                value={data.content.categories ?? 0}
+              />
+              <Stat
+                label={t('dash.journals')}
+                value={data.content.journals}
+              />
+              <Stat label={t('dash.pages')} value={data.content.pages} />
+              <Stat
+                label={t('dash.ar_assets')}
+                value={data.content.arAssets}
+              />
             </div>
           </section>
 
           <section>
             <h2 className="mb-2 text-sm font-semibold text-slate-700">
-              Avatar chat
+              {t('dash.avatar_chat')}
             </h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
               <Stat
-                label="Messages (24h)"
+                label={t('dash.messages_24h')}
                 value={data.avatar.messages24h}
               />
               <Stat
-                label="Messages (all time)"
+                label={t('dash.messages_total')}
                 value={data.avatar.messagesTotal}
               />
             </div>
@@ -96,11 +124,14 @@ export default function DashboardPage() {
 
           <section>
             <h2 className="mb-2 text-sm font-semibold text-slate-700">
-              Telegram
+              {t('dash.telegram')}
             </h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              <Stat label="TG users" value={data.telegram.total} />
-              <Stat label="Banned" value={data.telegram.banned} />
+              <Stat
+                label={t('dash.tg_users')}
+                value={data.telegram.total}
+              />
+              <Stat label={t('dash.banned')} value={data.telegram.banned} />
             </div>
           </section>
         </div>

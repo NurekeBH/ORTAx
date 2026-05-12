@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/ortax_colors.dart';
@@ -22,12 +23,59 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
   final _recorder = AudioRecorder();
   bool _recording = false;
 
+  VideoPlayerController? _videoCtrl;
+  bool _videoReady = false;
+  bool _wasAudioPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    final c = VideoPlayerController.asset('assets/avatar/video.mp4');
+    try {
+      await c.initialize();
+      await c.setLooping(true);
+      await c.setVolume(0); // ылғи дауыссыз
+      await c.seekTo(Duration.zero);
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      setState(() {
+        _videoCtrl = c;
+        _videoReady = true;
+      });
+    } catch (_) {
+      await c.dispose();
+    }
+  }
+
   @override
   void dispose() {
+    // Чат бетінен шыққанда дауысты + видеоны тоқтату
+    ref.read(avatarChatProvider.notifier).stopAudio();
+    _videoCtrl?.pause();
     _textCtrl.dispose();
     _scrollCtrl.dispose();
     _recorder.dispose();
+    _videoCtrl?.dispose();
     super.dispose();
+  }
+
+  void _syncVideoToAudio(bool audioPlaying) {
+    final v = _videoCtrl;
+    if (v == null || !_videoReady) return;
+    if (audioPlaying && !_wasAudioPlaying) {
+      v.setVolume(0);
+      v.play();
+    } else if (!audioPlaying && _wasAudioPlaying) {
+      v.pause();
+      v.seekTo(Duration.zero);
+    }
+    _wasAudioPlaying = audioPlaying;
   }
 
   void _send() {
@@ -88,59 +136,69 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
     final t = AppLocalizations.of(context);
     final state = ref.watch(avatarChatProvider);
 
+    ref.listen<AvatarChatState>(avatarChatProvider, (prev, next) {
+      _syncVideoToAudio(next.isAudioPlaying);
+    });
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: 0.35),
+        elevation: 0,
+        foregroundColor: Colors.white,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(t.avatarTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            Text(t.avatarTitle,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
             Text(
               t.avatarSubtitle,
-              style: TextStyle(fontSize: 12, color: context.colors.textSecondary, fontWeight: FontWeight.normal),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.normal),
             ),
           ],
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: state.messages.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.functions, size: 48, color: AppColors.primary),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              t.avatarEmpty,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: context.colors.textSecondary,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollCtrl,
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                      itemCount: state.messages.length,
-                      itemBuilder: (_, i) => _MessageBubble(message: state.messages[i]),
-                    ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 1. Толық экран видео фоны
+          _FullscreenVideo(controller: _videoCtrl, ready: _videoReady),
+          // 2. Жоғары жағы — қараңғы градиент (AppBar оқылатын болсын)
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.4, 1.0],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.55),
+                  ],
+                ),
+              ),
             ),
+          ),
+          // 3. Чат тарихы + композер
+          SafeArea(child: _buildChatColumn(context, t, state)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatColumn(BuildContext context, AppLocalizations t, AvatarChatState state) {
+    return Column(
+      children: [
+        const Expanded(child: SizedBox.shrink()),
             if (state.loading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -189,132 +247,12 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
               recording: _recording,
               disabled: state.loading && !_recording,
             ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 }
 
-class _MessageBubble extends ConsumerWidget {
-  final ChatMessage message;
-  const _MessageBubble({required this.message});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isUser = message.role == ChatRole.user;
-    final canReplay = !isUser && message.audioBytes != null && message.audioBytes!.isNotEmpty;
-    final textColor = isUser ? AppColors.textInverse : context.colors.textPrimary;
-
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
-        decoration: BoxDecoration(
-          color: isUser ? AppColors.primary : context.colors.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isUser ? 16 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 16),
-          ),
-          border: isUser ? null : Border.all(color: context.colors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (canReplay)
-              _VoicePlayButton(
-                onTap: () => ref.read(avatarChatProvider.notifier).playMessageAudio(message),
-              ),
-            if (canReplay) const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.isVoice && !canReplay) ...[
-                  Icon(Icons.mic, size: 14, color: textColor),
-                  const SizedBox(width: 6),
-                ],
-                Flexible(
-                  child: Text(
-                    message.text,
-                    style: TextStyle(color: textColor, fontSize: 15, height: 1.4),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VoicePlayButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _VoicePlayButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.play_arrow_rounded, size: 20, color: AppColors.primary),
-              const SizedBox(width: 4),
-              Container(
-                width: 70,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(10, (i) {
-                    final h = 4.0 + (i % 4) * 2.5;
-                    return Container(
-                      width: 2,
-                      height: h,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(1),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              const SizedBox(width: 6),
-              const Text(
-                'Дауыс',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _Composer extends StatefulWidget {
   final TextEditingController controller;
@@ -446,3 +384,29 @@ class _ComposerState extends State<_Composer> {
     );
   }
 }
+
+class _FullscreenVideo extends StatelessWidget {
+  final VideoPlayerController? controller;
+  final bool ready;
+  const _FullscreenVideo({required this.controller, required this.ready});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ready || controller == null || !controller!.value.isInitialized) {
+      return Container(color: Colors.black);
+    }
+    final size = controller!.value.size;
+    return SizedBox.expand(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
+          child: VideoPlayer(controller!),
+        ),
+      ),
+    );
+  }
+}
+
+

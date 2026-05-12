@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/colors.dart';
 import '../../core/theme/ortax_colors.dart';
+import 'auth_controller.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -25,11 +28,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    context.go('/home');
+    if (!_formKey.currentState!.validate()) return;
+    final ok = await ref.read(authProvider.notifier).login(
+          phone: _phoneCtrl.text.trim(),
+          password: _passCtrl.text,
+        );
+    if (!mounted) return;
+    if (ok) context.go('/home');
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
@@ -92,10 +103,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text('Құпиясөзді ұмыттыңыз ба?'),
                   ),
                 ),
+                if (auth.error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    auth.error!,
+                    style: const TextStyle(color: AppColors.error, fontSize: 13),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _submit,
-                  child: const Text('Кіру'),
+                  onPressed: auth.loading ? null : _submit,
+                  child: auth.loading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+                        )
+                      : const Text('Кіру'),
                 ),
                 const SizedBox(height: 24),
                 Row(

@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class RegisterScreen extends StatefulWidget {
+import '../../core/theme/colors.dart';
+import 'auth_controller.dart';
+
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _otpCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _otpSent = false;
-  bool _loading = false;
 
   Future<void> _sendOtp() async {
     if (_phoneCtrl.text.length < 10) {
@@ -25,26 +28,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       return;
     }
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 700));
+    if (_passCtrl.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Құпиясөз кем дегенде 6 таңба')),
+      );
+      return;
+    }
+    final ok = await ref.read(authProvider.notifier).requestRegister(
+          phone: _phoneCtrl.text.trim(),
+          password: _passCtrl.text,
+        );
     if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _otpSent = true;
-    });
+    if (ok) {
+      setState(() => _otpSent = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('SMS жіберілді (демо: код 0000)')),
+      );
+    }
   }
 
   Future<void> _verify() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 700));
+    final ok = await ref.read(authProvider.notifier).verifyRegister(
+          phone: _phoneCtrl.text.trim(),
+          otp: _otpCtrl.text.trim(),
+        );
     if (!mounted) return;
-    setState(() => _loading = false);
-    context.go('/home');
+    if (ok) context.go('/home');
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
@@ -94,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      labelText: 'SMS код',
+                      labelText: 'SMS код (демо: 0000)',
                       prefixIcon: Icon(Icons.sms_outlined),
                     ),
                     validator: (v) {
@@ -103,10 +119,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ],
+                if (auth.error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    auth.error!,
+                    style: const TextStyle(color: AppColors.error, fontSize: 13),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _loading ? null : (_otpSent ? _verify : _sendOtp),
-                  child: _loading
+                  onPressed: auth.loading ? null : (_otpSent ? _verify : _sendOtp),
+                  child: auth.loading
                       ? const SizedBox(
                           height: 22,
                           width: 22,

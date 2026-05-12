@@ -2,14 +2,18 @@ import {
   Body,
   Controller,
   Get,
+  Optional,
   Param,
   Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
+import { Repository } from 'typeorm';
 
+import { AvatarOverride } from './avatar-override.entity';
 import { AvatarService } from './avatar.service';
 import { AskDto } from './dto/ask.dto';
 import { CHARACTERS, isCharacterId } from './prompts/characters';
@@ -22,7 +26,28 @@ export class AvatarController {
     private readonly avatar: AvatarService,
     private readonly stt: SttService,
     private readonly tts: TtsService,
+    @Optional()
+    @InjectRepository(AvatarOverride)
+    private readonly overrides?: Repository<AvatarOverride>,
   ) {}
+
+  @Get('characters')
+  async listCharacters() {
+    const overrideRows = this.overrides ? await this.overrides.find() : [];
+    const overrideMap = new Map(overrideRows.map((o) => [o.character, o]));
+    return Object.values(CHARACTERS).map((c) => {
+      const override = overrideMap.get(c.id);
+      return {
+        id: c.id,
+        displayName: c.displayName,
+        greeting: c.greeting,
+        helpText: c.helpText,
+        language: c.language ?? null,
+        defaultImageUrl: c.defaultImageUrl ?? null,
+        imageUrl: override?.imageUrl ?? c.defaultImageUrl ?? null,
+      };
+    });
+  }
 
   @Get(':character/greeting')
   greeting(@Param('character') character: string) {

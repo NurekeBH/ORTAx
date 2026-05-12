@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -16,6 +17,7 @@ import {
   CreateArAssetDto,
   CreateJournalDto,
   CreatePageDto,
+  ListJournalsDto,
   UpdateArAssetDto,
   UpdateJournalDto,
   UpdatePageDto,
@@ -27,8 +29,8 @@ export class JournalsAdminController {
   constructor(private readonly journals: JournalsService) {}
 
   @Get()
-  list() {
-    return this.journals.listAll();
+  list(@Query() query: ListJournalsDto) {
+    return this.journals.listAll(query);
   }
 
   @Get(':id')

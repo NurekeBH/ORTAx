@@ -11,6 +11,8 @@ export interface CharacterDefinition {
   helpText: string;
   /** ISO-639-1 language hint for STT and replies. Undefined = auto-detect. */
   language?: string;
+  /** Default portrait URL shipped with the codebase. Admin can override per-character via `AvatarOverride`. */
+  defaultImageUrl?: string;
 }
 
 export const CHARACTERS: Record<CharacterId, CharacterDefinition> = {
@@ -20,6 +22,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDefinition> = {
     systemPrompt: YASSAWI_SYSTEM_PROMPT,
     greeting: YASSAWI_GREETING,
     helpText: 'ORTAx — Қожа Ахмет Яссауи AI-аватары.',
+    defaultImageUrl: '/uploads/defaults/yassawi.png',
   },
   khwarizmi: {
     id: 'khwarizmi',
@@ -28,6 +31,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDefinition> = {
     greeting: KHWARIZMI_GREETING,
     helpText: 'ORTAx — Әл-Хорезми AI-аватары (математика, алгебра, астрономия). Тек қазақ тілінде.',
     language: 'kk',
+    defaultImageUrl: '/uploads/defaults/khwarizmi.png',
   },
 };
 

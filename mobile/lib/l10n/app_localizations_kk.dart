@@ -194,6 +194,18 @@ class AppLocalizationsKk extends AppLocalizations {
   String get avatarSubtitle => 'Алгебраның атасы — сұрағыңызды қойыңыз';
 
   @override
+  String get avatarModeVideo => 'Видео';
+
+  @override
+  String get avatarModeVideoSubtitle => 'Тірі аватармен сөйлесу';
+
+  @override
+  String get avatarModeChat => 'Чат';
+
+  @override
+  String get avatarModeChatSubtitle => 'Мәтін және дауыс';
+
+  @override
   String get avatarHint => 'Әл-Хорезмиден сұраңыз…';
 
   @override

@@ -5,6 +5,7 @@ import { MoreThan, Repository } from 'typeorm';
 import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatLog } from '../avatar/chat-log.entity';
+import { CategoriesService } from '../journals/categories.service';
 import { JournalsService } from '../journals/journals.service';
 import { TelegramUser } from '../telegram/telegram-user.entity';
 import { UsersService } from '../users/users.service';
@@ -17,6 +18,7 @@ export class AnalyticsAdminController {
   constructor(
     private readonly users: UsersService,
     private readonly journals: JournalsService,
+    private readonly categories: CategoriesService,
     @Optional()
     @InjectRepository(ChatLog)
     private readonly chatLogs?: Repository<ChatLog>,
@@ -39,10 +41,11 @@ export class AnalyticsAdminController {
       this.users.countActiveSince(since30d),
     ]);
 
-    const [journals, pages, assets] = await Promise.all([
+    const [journals, pages, assets, categories] = await Promise.all([
       this.journals.countJournals(),
       this.journals.countPages(),
       this.journals.countAssets(),
+      this.categories.count(),
     ]);
 
     const chatMessages24h = this.chatLogs
@@ -57,7 +60,7 @@ export class AnalyticsAdminController {
 
     return {
       users: { total: totalUsers, dau, wau, mau },
-      content: { journals, pages, arAssets: assets },
+      content: { journals, pages, arAssets: assets, categories },
       avatar: { messages24h: chatMessages24h, messagesTotal: chatMessagesTotal },
       telegram: { total: tgUsersTotal, banned: tgBanned },
     };

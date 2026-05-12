@@ -64,6 +64,14 @@ export class CreateJournalDto {
 
   @IsOptional()
   @IsString()
+  pdfUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  trailerVideoUrl?: string;
+
+  @IsOptional()
+  @IsString()
   subject?: string;
 
   @IsOptional()
@@ -71,8 +79,32 @@ export class CreateJournalDto {
   gradeLevel?: string;
 
   @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  author?: string;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  featured?: boolean;
+
+  @IsOptional()
   @IsBoolean()
   published?: boolean;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 }
 
 export class UpdateJournalDto {
@@ -90,6 +122,14 @@ export class UpdateJournalDto {
 
   @IsOptional()
   @IsString()
+  pdfUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  trailerVideoUrl?: string;
+
+  @IsOptional()
+  @IsString()
   subject?: string;
 
   @IsOptional()
@@ -97,8 +137,120 @@ export class UpdateJournalDto {
   gradeLevel?: string;
 
   @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  author?: string;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  featured?: boolean;
+
+  @IsOptional()
   @IsBoolean()
   published?: boolean;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+}
+
+export class ListJournalsDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsString()
+  gradeLevel?: string;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  featured?: boolean;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  published?: boolean;
+}
+
+export class CreateCategoryDto {
+  @IsString()
+  slug!: string;
+
+  @IsString()
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  sortOrder?: number;
+}
+
+export class UpdateCategoryDto {
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  sortOrder?: number;
 }
 
 export class CreatePageDto {
@@ -109,7 +261,19 @@ export class CreatePageDto {
 
   @IsOptional()
   @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  audioUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
 
   @IsOptional()
   @IsString()
@@ -125,7 +289,19 @@ export class UpdatePageDto {
 
   @IsOptional()
   @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  audioUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
 
   @IsOptional()
   @IsString()

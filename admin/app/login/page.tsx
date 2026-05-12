@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { login, setStoredUser, setToken } from '../../lib/api';
+import { useI18n } from '../../lib/i18n';
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -39,13 +41,15 @@ export default function LoginPage() {
         className="card w-full max-w-sm space-y-4 p-6"
       >
         <div>
-          <div className="text-xl font-bold text-brand-700">ORTAx Admin</div>
-          <p className="text-sm text-slate-500">Авторизация қажет</p>
+          <div className="text-xl font-bold text-brand-700">
+            {t('login.title')}
+          </div>
+          <p className="text-sm text-slate-500">{t('login.subtitle')}</p>
         </div>
 
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">
-            Phone
+            {t('login.phone')}
           </label>
           <input
             className="input"
@@ -60,7 +64,7 @@ export default function LoginPage() {
 
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">
-            Password
+            {t('login.password')}
           </label>
           <input
             className="input"
@@ -83,11 +87,11 @@ export default function LoginPage() {
           className="btn-primary w-full"
           disabled={loading || !phone || !password}
         >
-          {loading ? 'Кіру...' : 'Кіру'}
+          {loading ? t('login.submitting') : t('login.submit')}
         </button>
 
         <p className="text-center text-xs text-slate-400">
-          Тек admin рөлі бар аккаунт қана кіре алады.
+          {t('login.note')}
         </p>
       </form>
     </div>

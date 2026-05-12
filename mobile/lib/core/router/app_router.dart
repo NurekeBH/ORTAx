@@ -5,7 +5,9 @@ import '../../features/ar/ar_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
+import '../../features/avatar/avatar_hub_screen.dart';
 import '../../features/avatar/avatar_screen.dart';
+import '../../features/avatar/live_avatar_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/journal_detail/journal_detail_screen.dart';
 import '../../features/journals/journals_screen.dart';
@@ -37,7 +39,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             GoRoute(path: '/journals', builder: (_, _) => const JournalsScreen()),
           ]),
           StatefulShellBranch(routes: [
-            GoRoute(path: '/avatar', builder: (_, _) => const AvatarScreen()),
+            GoRoute(
+              path: '/avatar',
+              builder: (_, _) => const AvatarHubScreen(),
+            ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/messages', builder: (_, _) => const MessagesScreen()),
@@ -47,6 +52,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ]),
         ],
       ),
+      // Chat / Live — shell-ден тыс, толық экран (tabs көрінбейді)
+      GoRoute(path: '/chat', builder: (_, _) => const AvatarScreen()),
+      GoRoute(path: '/avatar-live', builder: (_, _) => const LiveAvatarScreen()),
       GoRoute(
         path: '/journal/:id',
         builder: (_, state) =>
@@ -54,8 +62,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ar/:markerId',
-        builder: (_, state) =>
-            ArScreen(markerId: state.pathParameters['markerId']!),
+        builder: (_, state) => ArScreen(
+          markerId: state.pathParameters['markerId']!,
+          modelUrl: state.uri.queryParameters['modelUrl'],
+          imageUrl: state.uri.queryParameters['imageUrl'],
+          title: state.uri.queryParameters['title'],
+          subtitle: state.uri.queryParameters['subtitle'],
+        ),
       ),
     ],
   );

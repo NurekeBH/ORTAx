@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 
 import { api, fetcher } from '../../lib/api';
+import { useI18n } from '../../lib/i18n';
 
 interface TgUser {
   telegramId: string;
@@ -29,6 +30,7 @@ interface Character {
 }
 
 export default function TelegramPage() {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [character, setCharacter] = useState('');
   const qs = new URLSearchParams({ pageSize: '100' });
@@ -60,11 +62,7 @@ export default function TelegramPage() {
 
   async function sendBroadcast() {
     if (!broadcast.character || !broadcast.message) return;
-    if (
-      !confirm(
-        `${broadcast.character} ботындағы барлық пайдаланушыларға жіберу?`,
-      )
-    )
+    if (!confirm(`${broadcast.character} — ${t('tg.confirm_broadcast')}`))
       return;
     const res = await api<{ sent: number; failed: number }>(
       '/admin/telegram/broadcast',
@@ -79,15 +77,15 @@ export default function TelegramPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">Telegram</h1>
-      <p className="text-sm text-slate-500">
-        Telegram бот пайдаланушылары мен broadcast
-      </p>
+      <h1 className="text-2xl font-bold text-slate-900">{t('tg.title')}</h1>
+      <p className="text-sm text-slate-500">{t('tg.subtitle')}</p>
 
       <section className="card mt-4 p-4">
-        <h2 className="text-sm font-semibold text-slate-700">Broadcast</h2>
+        <h2 className="text-sm font-semibold text-slate-700">
+          {t('tg.broadcast')}
+        </h2>
         <p className="mt-1 text-xs text-slate-500">
-          Таңдалған боттың барлық белсенді пайдаланушыларына хабарлама жібереді.
+          {t('tg.broadcast_hint')}
         </p>
         <div className="mt-3 grid gap-2 md:grid-cols-[200px_1fr_auto]">
           <select
@@ -97,7 +95,7 @@ export default function TelegramPage() {
               setBroadcast({ ...broadcast, character: e.target.value })
             }
           >
-            <option value="">Select bot…</option>
+            <option value="">{t('tg.select_bot')}</option>
             {characters?.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.displayName}
@@ -106,7 +104,7 @@ export default function TelegramPage() {
           </select>
           <input
             className="input"
-            placeholder="Message text"
+            placeholder={t('tg.msg_ph')}
             value={broadcast.message}
             onChange={(e) =>
               setBroadcast({ ...broadcast, message: e.target.value })
@@ -117,7 +115,7 @@ export default function TelegramPage() {
             disabled={!broadcast.character || !broadcast.message}
             onClick={sendBroadcast}
           >
-            Send
+            {t('tg.send')}
           </button>
         </div>
         {broadcastResult && (
@@ -130,12 +128,12 @@ export default function TelegramPage() {
       <section className="mt-6">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-700">
-            TG users ({data?.total ?? 0})
+            {t('tg.users_title')} ({data?.total ?? 0})
           </h2>
           <div className="flex gap-2">
             <input
               className="input max-w-[200px]"
-              placeholder="Search by username…"
+              placeholder={t('tg.search_ph')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

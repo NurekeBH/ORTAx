@@ -1,6 +1,57 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:3000/api';
 
+export const STATIC_BASE = API_BASE.replace(/\/api\/?$/, '');
+
+export function assetUrl(path?: string | null): string {
+  if (!path) return '';
+  if (/^https?:\/\//.test(path)) return path;
+  if (path.startsWith('/')) return `${STATIC_BASE}${path}`;
+  return `${STATIC_BASE}/${path}`;
+}
+
+export type UploadKind = 'image' | 'audio' | 'video' | 'model' | 'pdf' | 'file';
+
+export interface UploadResult {
+  url: string;
+  filename: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
+  kind: UploadKind;
+}
+
+export async function uploadFile(
+  kind: UploadKind,
+  file: File,
+): Promise<UploadResult> {
+  const token = getToken();
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${API_BASE}/admin/uploads/${kind}`, {
+    method: 'POST',
+    body: form,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (res.status === 401 || res.status === 403) {
+    if (typeof window !== 'undefined') {
+      clearAuth();
+      window.location.href = '/login';
+    }
+    throw new ApiError(res.status, 'Unauthorized');
+  }
+  if (!res.ok) {
+    let detail = '';
+    try {
+      detail = await res.text();
+    } catch {
+      // ignore
+    }
+    throw new ApiError(res.status, detail || `Upload failed: ${res.status}`);
+  }
+  return (await res.json()) as UploadResult;
+}
+
 const TOKEN_KEY = 'ortax-admin-token';
 const USER_KEY = 'ortax-admin-user';
 

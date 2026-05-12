@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="kk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>ORTAx LiveAvatar</title>
+    <link rel="icon" href="data:," />
+    <style>
+      html, body {
+        margin: 0; padding: 0; height: 100%;
+        background: #0b0b10; color: #fff;
+        font-family: -apple-system, system-ui, sans-serif;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+      video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+
+      #status {
+        position: fixed;
+        top: max(env(safe-area-inset-top), 12px);
+        left: 12px; right: 12px;
+        font-size: 13px; opacity: 0.85;
+        pointer-events: none; white-space: pre-wrap;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+      }
+
+      #transcript {
+        position: fixed;
+        left: 12px; right: 12px;
+        bottom: 140px;
+        max-height: 35vh;
+        overflow-y: auto;
+        display: flex; flex-direction: column; gap: 6px;
+        pointer-events: none;
+      }
+      .bubble {
+        padding: 8px 12px;
+        border-radius: 14px;
+        font-size: 14px; line-height: 1.4;
+        max-width: 82%;
+        backdrop-filter: blur(8px);
+      }
+      .bubble.user {
+        align-self: flex-end;
+        background: rgba(245, 180, 0, 0.85);
+        color: #0b0b10;
+        border-bottom-right-radius: 4px;
+      }
+      .bubble.avatar {
+        align-self: flex-start;
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+        border-bottom-left-radius: 4px;
+      }
+
+      #controls {
+        position: fixed;
+        left: 0; right: 0;
+        bottom: max(env(safe-area-inset-bottom), 18px);
+        display: flex; align-items: center; justify-content: center;
+        gap: 14px;
+      }
+
+      .mic {
+        width: 88px; height: 88px;
+        border-radius: 50%;
+        border: none;
+        background: #f5b400;
+        color: #0b0b10;
+        font-size: 36px;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(245,180,0,0.45);
+        transition: transform 0.12s ease, background 0.12s ease;
+        touch-action: none;
+      }
+      .mic:active, .mic.holding { transform: scale(1.08); background: #ff5252; color: #fff; }
+      .mic:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+      .side {
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,0.18);
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+      }
+      .side:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      #hint {
+        position: fixed;
+        left: 12px; right: 12px;
+        bottom: 120px;
+        text-align: center;
+        font-size: 12px;
+        color: rgba(255,255,255,0.7);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <video id="avatar" autoplay playsinline></video>
+    </div>
+
+    <div id="status">Жүктелуде…</div>
+
+    <div id="transcript"></div>
+    <div id="hint">Микрофонды басып тұрып сөйлеңіз</div>
+
+    <div id="controls">
+      <button id="text-btn" class="side" disabled title="Мәтінмен жіберу">⌨</button>
+      <button id="mic" class="mic" disabled>🎙</button>
+      <button id="interrupt" class="side" disabled title="Аватарды үзу">✋</button>
+      <button id="stop" class="side" disabled title="Жабу">✕</button>
+    </div>
+
+    <script type="module">
+      import {
+        LiveAvatarSession,
+        SessionEvent,
+        AgentEventsEnum,
+        SessionInteractivityMode,
+      } from "https://esm.sh/@heygen/liveavatar-web-sdk@latest";
+
+      const statusEl = document.getElementById('status');
+      const videoEl = document.getElementById('avatar');
+      const micBtn = document.getElementById('mic');
+      const stopBtn = document.getElementById('stop');
+      const interruptBtn = document.getElementById('interrupt');
+      const textBtn = document.getElementById('text-btn');
+      const transcriptEl = document.getElementById('transcript');
+
+      const setStatus = (msg) => {
+        statusEl.textContent = msg ?? '';
+        sendToFlutter({ type: 'status', message: msg ?? '' });
+      };
+
+      const sendToFlutter = (payload) => {
+        try { window.FlutterChannel?.postMessage(JSON.stringify(payload)); }
+        catch (e) { console.warn(e); }
+      };
+
+      function addBubble(role, text) {
+        const b = document.createElement('div');
+        b.className = 'bubble ' + role;
+        b.textContent = text;
+        transcriptEl.appendChild(b);
+        // Тек 6 соңғы хабар көрінсін
+        while (transcriptEl.children.length > 6) {
+          transcriptEl.removeChild(transcriptEl.firstChild);
+        }
+        transcriptEl.scrollTop = transcriptEl.scrollHeight;
+      }
+
+      const params = new URLSearchParams(location.search);
+      const apiBase = params.get('api') || `${location.origin}/api`;
+      const authToken = params.get('jwt') || '';
+
+      let session = null;
+      let holding = false;
+      let lastUserChunk = '';
+      let lastAvatarChunk = '';
+
+      async function getSessionToken() {
+        const res = await fetch(`${apiBase}/live-avatar/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({ mode: 'FULL', is_sandbox: true }),
+        });
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          throw new Error(`token → ${res.status} ${txt}`);
+        }
+        return res.json();
+      }
+
+      async function start() {
+        try {
+          setStatus('Token алынуда…');
+          const { session_token } = await getSessionToken();
+
+          setStatus('Сессия ашылуда…');
+          session = new LiveAvatarSession(session_token, {
+            voiceChat: { mode: SessionInteractivityMode.PUSH_TO_TALK, defaultMuted: true },
+          });
+
+          session.on(SessionEvent.SESSION_STREAM_READY, () => {
+            setStatus('Дайын — микрофонды басып ұстаңыз');
+            micBtn.disabled = false;
+            stopBtn.disabled = false;
+            interruptBtn.disabled = false;
+            textBtn.disabled = false;
+          });
+          session.on(SessionEvent.SESSION_DISCONNECTED, (reason) => {
+            setStatus('Сессия жабылды: ' + reason);
+            micBtn.disabled = true;
+            stopBtn.disabled = true;
+          });
+
+          // Agent (avatar/user) транскрипция event-тері
+          session.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, (e) => {
+            lastUserChunk = e.text;
+          });
+          session.on(AgentEventsEnum.USER_TRANSCRIPTION, (e) => {
+            if (e.text) addBubble('user', e.text);
+            lastUserChunk = '';
+          });
+          session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION_CHUNK, (e) => {
+            lastAvatarChunk = e.text;
+          });
+          session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (e) => {
+            if (e.text) addBubble('avatar', e.text);
+            lastAvatarChunk = '';
+          });
+          session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
+            setStatus('Аватар сөйлеп тұр…');
+          });
+          session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
+            setStatus('Тыңдау үшін микрофонды басыңыз');
+          });
+
+          await session.start();
+          session.attach(videoEl);
+        } catch (e) {
+          console.error(e);
+          setStatus('Қате: ' + (e?.message ?? e));
+          sendToFlutter({ type: 'error', message: String(e?.message ?? e) });
+        }
+      }
+
+      async function startTalking() {
+        if (!session || holding) return;
+        holding = true;
+        micBtn.classList.add('holding');
+        try {
+          await session.voiceChat.startPushToTalk();
+          setStatus('🎙 Тыңдалуда — сөйлеңіз…');
+        } catch (e) {
+          console.error(e);
+          setStatus('Микрофон қатесі: ' + e.message);
+          holding = false;
+          micBtn.classList.remove('holding');
+        }
+      }
+
+      async function stopTalking() {
+        if (!holding) return;
+        holding = false;
+        micBtn.classList.remove('holding');
+        try {
+          await session.voiceChat.stopPushToTalk();
+          setStatus('Жауап күтілуде…');
+        } catch (e) { console.error(e); }
+      }
+
+      // Pointer event — мышка/сенсор екеуіне ортақ, бір ғана рет жанады
+      micBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        micBtn.setPointerCapture?.(e.pointerId);
+        startTalking();
+      });
+      const releasePointer = (e) => {
+        e.preventDefault();
+        try { micBtn.releasePointerCapture?.(e.pointerId); } catch {}
+        stopTalking();
+      };
+      micBtn.addEventListener('pointerup', releasePointer);
+      micBtn.addEventListener('pointercancel', releasePointer);
+      micBtn.addEventListener('lostpointercapture', () => stopTalking());
+
+      // Бос орын батырмасы — қосымша push-to-talk
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !e.repeat) { e.preventDefault(); startTalking(); }
+      });
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') { e.preventDefault(); stopTalking(); }
+      });
+
+      // Аватар сөйлеп тұрса үзу
+      interruptBtn.addEventListener('click', () => {
+        try { session?.interrupt(); } catch (e) { console.warn(e); }
+      });
+
+      // Мәтін батырмасы — FULL mode-та LLM-мен сұхбат
+      textBtn.addEventListener('click', () => {
+        const t = prompt('Хорезмиге сұрағыңызды жазыңыз:');
+        if (!t || !session) return;
+        addBubble('user', t);
+        try { session.message(t); }
+        catch (e) { setStatus('Қате: ' + e.message); }
+      });
+
+      stopBtn.addEventListener('click', async () => {
+        try { await session?.stop(); } finally { setStatus('Жабылды'); }
+      });
+
+      window.flutterInbox = (raw) => {
+        try {
+          const msg = JSON.parse(raw);
+          if (msg.type === 'speak') session?.message(msg.text);   // FULL mode
+          if (msg.type === 'stop') session?.stop();
+          if (msg.type === 'interrupt') session?.interrupt();
+        } catch (e) { console.warn(e); }
+      };
+
+      start();
+      window.addEventListener('beforeunload', () => session?.stop());
+    </script>
+  </body>
+</html>

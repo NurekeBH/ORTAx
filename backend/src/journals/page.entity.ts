@@ -22,8 +22,17 @@ export class Page {
   @Column({ name: 'page_number' })
   pageNumber!: number;
 
+  @Column({ nullable: true })
+  title?: string;
+
   @Column({ name: 'image_url', nullable: true })
   imageUrl?: string;
+
+  @Column({ name: 'audio_url', nullable: true })
+  audioUrl?: string;
+
+  @Column({ name: 'video_url', nullable: true })
+  videoUrl?: string;
 
   @Column({ type: 'text', nullable: true })
   text?: string;

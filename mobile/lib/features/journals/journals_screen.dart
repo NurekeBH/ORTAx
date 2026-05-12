@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,30 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/ortax_colors.dart';
 import '../../l10n/app_localizations.dart';
-import '../../shared/data/mock_journals.dart';
-import '../../shared/models/journal.dart';
-import '../../shared/widgets/journal_grid_card.dart';
-
-class _JournalsFilterNotifier extends Notifier<String> {
-  @override
-  String build() => 'all';
-  void set(String id) => state = id;
-}
-
-final _journalsFilterProvider =
-    NotifierProvider<_JournalsFilterNotifier, String>(
-      _JournalsFilterNotifier.new,
-    );
-
-class _JournalsQueryNotifier extends Notifier<String> {
-  @override
-  String build() => '';
-  void set(String q) => state = q;
-}
-
-final _journalsQueryProvider = NotifierProvider<_JournalsQueryNotifier, String>(
-  _JournalsQueryNotifier.new,
-);
+import 'journal_api_models.dart';
+import 'journals_repository.dart';
 
 enum JournalsViewMode { list, grid }
 
@@ -42,8 +21,8 @@ class _JournalsViewModeNotifier extends Notifier<JournalsViewMode> {
 
 final _journalsViewModeProvider =
     NotifierProvider<_JournalsViewModeNotifier, JournalsViewMode>(
-      _JournalsViewModeNotifier.new,
-    );
+  _JournalsViewModeNotifier.new,
+);
 
 class JournalsScreen extends ConsumerStatefulWidget {
   const JournalsScreen({super.key});
@@ -64,27 +43,10 @@ class _JournalsScreenState extends ConsumerState<JournalsScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final filter = ref.watch(_journalsFilterProvider);
-    final query = ref.watch(_journalsQueryProvider).trim().toLowerCase();
+    final query = ref.watch(journalsQueryProvider);
     final viewMode = ref.watch(_journalsViewModeProvider);
-
-    final categories = [
-      _Category('all', t.categoryAll),
-      _Category('Ғылым', t.categoryScience),
-      _Category('Табиғат', t.categoryNature),
-      _Category('Ғарыш', t.categorySpace),
-      _Category('Әдебиет', t.categoryLiterature),
-    ];
-
-    final filtered = mockJournals.where((j) {
-      final byCategory = filter == 'all' || j.subject == filter;
-      final byQuery =
-          query.isEmpty ||
-          j.title.toLowerCase().contains(query) ||
-          j.description.toLowerCase().contains(query) ||
-          j.subject.toLowerCase().contains(query);
-      return byCategory && byQuery;
-    }).toList();
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final journalsAsync = ref.watch(journalsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -114,16 +76,18 @@ class _JournalsScreenState extends ConsumerState<JournalsScreen> {
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: (v) =>
-                    ref.read(_journalsQueryProvider.notifier).set(v),
+                    ref.read(journalsQueryProvider.notifier).setSearch(v),
                 decoration: InputDecoration(
                   hintText: t.homeSearch,
                   prefixIcon: const Icon(Icons.search, size: 22),
-                  suffixIcon: query.isNotEmpty
+                  suffixIcon: (query.search ?? '').isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.close, size: 20),
                           onPressed: () {
                             _searchCtrl.clear();
-                            ref.read(_journalsQueryProvider.notifier).set('');
+                            ref
+                                .read(journalsQueryProvider.notifier)
+                                .setSearch(null);
                           },
                         )
                       : null,
@@ -151,49 +115,49 @@ class _JournalsScreenState extends ConsumerState<JournalsScreen> {
                 ),
               ),
             ),
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: categories.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (_, i) {
-                  final c = categories[i];
-                  final isSelected = c.id == filter;
-                  return _CategoryChip(
-                    label: c.label,
-                    selected: isSelected,
-                    onTap: () =>
-                        ref.read(_journalsFilterProvider.notifier).set(c.id),
-                  );
-                },
-              ),
+            _CategoryChipsBar(
+              categoriesAsync: categoriesAsync,
+              selectedSlug: query.categorySlug,
+              onSelect: (slug) =>
+                  ref.read(journalsQueryProvider.notifier).setCategory(slug),
+              allLabel: t.categoryAll,
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: filtered.isEmpty
-                  ? _EmptyState(query: query, t: t)
-                  : viewMode == JournalsViewMode.list
-                  ? ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => _JournalCard(journal: filtered[i]),
-                    )
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
+              child: journalsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => _ErrorState(
+                  message: e.toString(),
+                  onRetry: () => ref.invalidate(journalsProvider),
+                ),
+                data: (journals) {
+                  if (journals.isEmpty) {
+                    return _EmptyState(query: query.search ?? '', t: t);
+                  }
+                  return viewMode == JournalsViewMode.list
+                      ? ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                          itemCount: journals.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (_, i) =>
+                              _JournalCard(journal: journals[i]),
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                             childAspectRatio: 0.6,
                           ),
-                      itemCount: filtered.length,
-                      itemBuilder: (_, i) =>
-                          JournalGridCard(journal: filtered[i]),
-                    ),
+                          itemCount: journals.length,
+                          itemBuilder: (_, i) =>
+                              _JournalGridTile(journal: journals[i]),
+                        );
+                },
+              ),
             ),
           ],
         ),
@@ -202,18 +166,63 @@ class _JournalsScreenState extends ConsumerState<JournalsScreen> {
   }
 }
 
-class _Category {
-  final String id;
-  final String label;
-  const _Category(this.id, this.label);
+class _CategoryChipsBar extends StatelessWidget {
+  final AsyncValue<List<JournalCategory>> categoriesAsync;
+  final String? selectedSlug;
+  final ValueChanged<String?> onSelect;
+  final String allLabel;
+  const _CategoryChipsBar({
+    required this.categoriesAsync,
+    required this.selectedSlug,
+    required this.onSelect,
+    required this.allLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: categoriesAsync.when(
+        loading: () => const SizedBox.shrink(),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (categories) {
+          final items = <Widget>[
+            _CategoryChip(
+              label: allLabel,
+              icon: null,
+              selected: selectedSlug == null,
+              onTap: () => onSelect(null),
+            ),
+            ...categories.map(
+              (c) => _CategoryChip(
+                label: c.name,
+                icon: c.icon,
+                selected: c.slug == selectedSlug,
+                onTap: () => onSelect(c.slug),
+              ),
+            ),
+          ];
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: items.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, i) => items[i],
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _CategoryChip extends StatelessWidget {
   final String label;
+  final String? icon;
   final bool selected;
   final VoidCallback onTap;
   const _CategoryChip({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
@@ -244,17 +253,58 @@ class _CategoryChip extends StatelessWidget {
               if (selected) ...[
                 const Icon(Icons.check, size: 16, color: AppColors.primary),
                 const SizedBox(width: 6),
+              ] else if (icon != null && icon!.isNotEmpty) ...[
+                Text(icon!, style: const TextStyle(fontSize: 14)),
+                const SizedBox(width: 6),
               ],
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? AppColors.primary : context.colors.textPrimary,
+                  color: selected
+                      ? AppColors.primary
+                      : context.colors.textPrimary,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 14,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off, size: 48, color: context.colors.textSecondary),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.colors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Қайталау'),
+            ),
+          ],
         ),
       ),
     );
@@ -290,7 +340,8 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               query.isEmpty ? '—' : '"$query"',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
             ),
           ],
         ),
@@ -300,7 +351,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _JournalCard extends StatelessWidget {
-  final Journal journal;
+  final ApiJournal journal;
   const _JournalCard({required this.journal});
 
   @override
@@ -329,24 +380,7 @@ class _JournalCard extends StatelessWidget {
               ),
               child: AspectRatio(
                 aspectRatio: 16 / 10,
-                child: Container(
-                  color: context.colors.surfaceMuted,
-                  child: journal.coverAssetPath != null
-                      ? Image.asset(
-                          journal.coverAssetPath!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 48,
-                            color: context.colors.textSecondary,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.menu_book,
-                          size: 64,
-                          color: AppColors.primary,
-                        ),
-                ),
+                child: _CoverImage(url: journal.coverImageUrl),
               ),
             ),
             Padding(
@@ -358,17 +392,22 @@ class _JournalCard extends StatelessWidget {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      _Tag(label: journal.subject),
-                      _Tag(label: journal.gradeLevel),
-                      if (journal.hasAr) _Tag(label: 'AR', accent: true),
+                      if (journal.category != null)
+                        _Tag(label: journal.category!.name)
+                      else if ((journal.subject ?? '').isNotEmpty)
+                        _Tag(label: journal.subject!),
+                      if ((journal.gradeLevel ?? '').isNotEmpty)
+                        _Tag(label: journal.gradeLevel!),
+                      if (journal.featured)
+                        const _Tag(label: '★', accent: true),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Text(
                     journal.title,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -376,9 +415,24 @@ class _JournalCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.colors.textSecondary,
-                      height: 1.45,
-                    ),
+                          color: context.colors.textSecondary,
+                          height: 1.45,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.visibility_outlined,
+                          size: 14, color: context.colors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${journal.viewsCount}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.colors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -390,6 +444,141 @@ class _JournalCard extends StatelessWidget {
   }
 }
 
+class _JournalGridTile extends StatelessWidget {
+  final ApiJournal journal;
+  const _JournalGridTile({required this.journal});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/journal/${journal.id}'),
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.colors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _CoverImage(url: journal.coverImageUrl),
+                  if (journal.featured)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          '★',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (journal.category != null)
+                      Text(
+                        journal.category!.name,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      journal.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Icon(Icons.visibility_outlined,
+                            size: 12, color: context.colors.textSecondary),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${journal.viewsCount}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CoverImage extends StatelessWidget {
+  final String? url;
+  const _CoverImage({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    if (url == null || url!.isEmpty) {
+      return Container(
+        color: context.colors.surfaceMuted,
+        child: const Icon(Icons.menu_book, size: 48, color: AppColors.primary),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url!,
+      fit: BoxFit.cover,
+      placeholder: (_, _) => Container(color: context.colors.surfaceMuted),
+      errorWidget: (_, _, _) => Container(
+        color: context.colors.surfaceMuted,
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: context.colors.textSecondary,
+          size: 36,
+        ),
+      ),
+    );
+  }
+}
 
 class _Tag extends StatelessWidget {
   final String label;
@@ -406,22 +595,13 @@ class _Tag extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: accent ? Border.all(color: color.withValues(alpha: 0.4)) : null,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (accent) ...[
-            const Icon(Icons.view_in_ar, size: 12, color: AppColors.accent),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }

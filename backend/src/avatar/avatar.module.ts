@@ -2,6 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AvatarController } from './avatar.controller';
+import { AvatarOverride } from './avatar-override.entity';
 import { AvatarService } from './avatar.service';
 import { ChatLog } from './chat-log.entity';
 import { LlmService } from './llm.service';
@@ -11,7 +12,7 @@ import { TtsService } from './voice/tts.service';
 const dbEnabled = process.env.DB_ENABLED !== 'false';
 
 const dbImports: DynamicModule[] = dbEnabled
-  ? [TypeOrmModule.forFeature([ChatLog])]
+  ? [TypeOrmModule.forFeature([ChatLog, AvatarOverride])]
   : [];
 
 @Module({

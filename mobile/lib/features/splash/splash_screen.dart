@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/ortax_colors.dart';
+import '../auth/auth_controller.dart';
 
-class SplashScreen extends StatefulWidget {
+const _onboardingSeenKey = 'app.onboardingSeen';
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      context.go('/onboarding');
-    });
+    // Auth provider-ді ерте оқып, _load() іске қосылсын
+    ref.read(authProvider);
+    _route();
+  }
+
+  Future<void> _route() async {
+    final prefs = await SharedPreferences.getInstance();
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+
+    final token = prefs.getString('auth.token');
+    if (token != null && token.isNotEmpty) {
+      context.go('/home');
+      return;
+    }
+
+    final onboardingSeen = prefs.getBool(_onboardingSeenKey) ?? false;
+    context.go(onboardingSeen ? '/login' : '/onboarding');
   }
 
   @override

@@ -261,7 +261,16 @@ class _KhwarizmiHero extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: const Icon(Icons.functions, size: 38, color: AppColors.primary),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/avatar/avatar.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.functions,
+                    size: 38,
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(

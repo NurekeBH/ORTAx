@@ -140,7 +140,13 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
       _syncVideoToAudio(next.isAudioPlaying);
     });
 
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        ref.read(avatarChatProvider.notifier).stopAudio();
+        _videoCtrl?.pause();
+      },
+      child: Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.black,
       appBar: AppBar(

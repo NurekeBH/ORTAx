@@ -1,5 +1,21 @@
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:3000/api';
+/**
+ * API base resolution:
+ *  1. `NEXT_PUBLIC_API_BASE` env wins (build-time inlined).
+ *  2. In the browser → `${origin}/api` so prod admin at https://ortax.online/admin
+ *     uses https://ortax.online/api automatically; dev on localhost:3001 still
+ *     hits localhost:3001/api (proxy/reverse-proxy required in dev).
+ *  3. SSR/Node fallback: localhost:3000/api.
+ */
+function resolveApiBase(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_BASE;
+  if (fromEnv && fromEnv.length > 0) return fromEnv;
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api`;
+  }
+  return 'http://localhost:3000/api';
+}
+
+export const API_BASE = resolveApiBase();
 
 export const STATIC_BASE = API_BASE.replace(/\/api\/?$/, '');
 

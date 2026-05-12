@@ -55,8 +55,7 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
 
   @override
   void dispose() {
-    // Чат бетінен шыққанда дауысты + видеоны тоқтату
-    ref.read(avatarChatProvider.notifier).stopAudio();
+    // PopScope onPopInvokedWithResult-та stopAudio шақырылған
     _videoCtrl?.pause();
     _textCtrl.dispose();
     _scrollCtrl.dispose();
@@ -196,7 +195,49 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
           ),
           // 3. Чат тарихы + композер
           SafeArea(child: _buildChatColumn(context, t, state)),
+          // 4. Аудио ойнап жатқанда — өзгеше Stop батырмасы
+          if (state.isAudioPlaying)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 110,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => ref.read(avatarChatProvider.notifier).stopAudio(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.stop_rounded, color: Colors.white, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'Тоқтату',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
+      ),
       ),
     );
   }

@@ -7,17 +7,27 @@ import '../../core/api/api_client.dart' show fullAssetUrl;
 import '../../core/theme/colors.dart';
 import '../../core/theme/ortax_colors.dart';
 import '../../l10n/app_localizations.dart';
+import 'avatar_chat_controller.dart';
+import 'avatar_history_sheet.dart';
 import 'avatar_repository.dart';
 
 /// Tab3-тің кіру нүктесі. Хорезмидің портретін көрсетеді және астында
 /// екі режимді ұсынады:
 ///   • Чат — мәтін/дауыс (бар [AvatarScreen])
 ///   • Видео — LiveAvatar streaming ([LiveAvatarScreen])
-class AvatarHubScreen extends StatelessWidget {
+class AvatarHubScreen extends ConsumerWidget {
   const AvatarHubScreen({super.key});
 
+  Future<void> _openHistory(BuildContext context, WidgetRef ref) async {
+    final selected = await AvatarHistorySheet.show(context, character: 'khwarizmi');
+    if (selected == null || !context.mounted) return;
+    await ref.read(avatarChatProvider.notifier).loadConversation(selected);
+    if (!context.mounted) return;
+    context.push('/chat');
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
 
     return Scaffold(
@@ -27,6 +37,14 @@ class AvatarHubScreen extends StatelessWidget {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         centerTitle: false,
+        actions: [
+          IconButton(
+            tooltip: 'Чат тарихы',
+            onPressed: () => _openHistory(context, ref),
+            icon: const Icon(Icons.history),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(
         child: Padding(

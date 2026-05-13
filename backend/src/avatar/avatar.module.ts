@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from '../auth/auth.module';
 import { AvatarController } from './avatar.controller';
 import { AvatarOverride } from './avatar-override.entity';
 import { AvatarService } from './avatar.service';
@@ -16,7 +17,7 @@ const dbImports: DynamicModule[] = dbEnabled
   : [];
 
 @Module({
-  imports: [...dbImports],
+  imports: [AuthModule, ...dbImports],
   controllers: [AvatarController],
   providers: [AvatarService, LlmService, SttService, TtsService],
   exports: [AvatarService, SttService, TtsService, ...dbImports],

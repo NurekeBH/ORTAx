@@ -22,6 +22,7 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
   final _scrollCtrl = ScrollController();
   final _recorder = AudioRecorder();
   bool _recording = false;
+  bool _showChat = false;
 
   VideoPlayerController? _videoCtrl;
   bool _videoReady = false;
@@ -34,7 +35,10 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
   }
 
   Future<void> _initVideo() async {
-    final c = VideoPlayerController.asset('assets/avatar/video.mp4');
+    final c = VideoPlayerController.asset(
+      'assets/avatar/video.mp4',
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
     try {
       await c.initialize();
       await c.setLooping(true);
@@ -64,17 +68,20 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
     super.dispose();
   }
 
-  void _syncVideoToAudio(bool audioPlaying) {
+  void _syncVideoToAudio(bool audioPlaying, ChatRole? role) {
+    // Тек avatar (Хорезми) дауысы ойналғанда видео анимациялансын.
+    // User-дың өз дауысы — видео тоқтап тұрсын.
+    final shouldPlay = audioPlaying && role == ChatRole.avatar;
     final v = _videoCtrl;
     if (v == null || !_videoReady) return;
-    if (audioPlaying && !_wasAudioPlaying) {
+    if (shouldPlay && !_wasAudioPlaying) {
       v.setVolume(0);
       v.play();
-    } else if (!audioPlaying && _wasAudioPlaying) {
+    } else if (!shouldPlay && _wasAudioPlaying) {
       v.pause();
       v.seekTo(Duration.zero);
     }
-    _wasAudioPlaying = audioPlaying;
+    _wasAudioPlaying = shouldPlay;
   }
 
   void _send() {
@@ -136,7 +143,7 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
     final state = ref.watch(avatarChatProvider);
 
     ref.listen<AvatarChatState>(avatarChatProvider, (prev, next) {
-      _syncVideoToAudio(next.isAudioPlaying);
+      _syncVideoToAudio(next.isAudioPlaying, next.playingRole);
     });
 
     return PopScope(
@@ -170,6 +177,21 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
             ),
           ],
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => setState(() => _showChat = !_showChat),
+            icon: Icon(
+              _showChat ? Icons.visibility_off_outlined : Icons.chat_bubble_outline,
+              color: Colors.white,
+              size: 18,
+            ),
+            label: Text(
+              _showChat ? 'Жасыру' : 'Чаттың текстін көрсету',
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -193,7 +215,16 @@ class _AvatarScreenState extends ConsumerState<AvatarScreen> {
               ),
             ),
           ),
-          // 3. Чат тарихы + композер
+          // 3. Чат overlay (қажет болғанда)
+          if (_showChat)
+            Positioned(
+              left: 12,
+              right: 12,
+              top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+              bottom: 180,
+              child: _ChatOverlay(messages: state.messages),
+            ),
+          // 4. Чат тарихы + композер
           SafeArea(child: _buildChatColumn(context, t, state)),
           // 4. Аудио ойнап жатқанда — өзгеше Stop батырмасы
           if (state.isAudioPlaying)
@@ -457,3 +488,134 @@ class _FullscreenVideo extends StatelessWidget {
 }
 
 
+
+class _ChatOverlay extends ConsumerWidget {
+  final List<ChatMessage> messages;
+  const _ChatOverlay({required this.messages});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playingAt = ref.watch(avatarChatProvider.select(
+      (s) => s.isAudioPlaying ? s.playingAt : null,
+    ));
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: messages.isEmpty
+          ? Center(
+              child: Text(
+                'Әңгіме әлі басталмаған',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 13,
+                ),
+              ),
+            )
+          : ListView.builder(
+              reverse: true,
+              padding: EdgeInsets.zero,
+              itemCount: messages.length,
+              itemBuilder: (_, i) {
+                final m = messages[messages.length - 1 - i];
+                final isUser = m.role == ChatRole.user;
+                final hasAudio = m.audioBytes != null && m.audioBytes!.isNotEmpty;
+                final isThisPlaying = playingAt != null && playingAt == m.at;
+                return Align(
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.78,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isUser
+                          ? AppColors.primary.withValues(alpha: 0.85)
+                          : Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (hasAudio)
+                          _OverlayAudioRow(
+                            isUser: isUser,
+                            isPlaying: isThisPlaying,
+                            onTap: () => ref.read(avatarChatProvider.notifier).playMessageAudio(m),
+                          ),
+                        if (hasAudio) const SizedBox(height: 6),
+                        Text(
+                          m.text,
+                          style: TextStyle(
+                            color: isUser ? Colors.white : Colors.black87,
+                            fontSize: 13.5,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _OverlayAudioRow extends StatelessWidget {
+  final bool isUser;
+  final bool isPlaying;
+  final VoidCallback onTap;
+  const _OverlayAudioRow({
+    required this.isUser,
+    required this.isPlaying,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = isUser ? Colors.white : AppColors.primary;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: fg.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: fg.withValues(alpha: 0.4)),
+            ),
+            child: Icon(
+              isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+              size: 18,
+              color: fg,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Waveform visual
+          ...List.generate(12, (i) {
+            final h = 4.0 + ((i + (isPlaying ? DateTime.now().millisecond ~/ 100 : 0)) % 5) * 2.0;
+            return Container(
+              width: 2,
+              height: h,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                color: fg.withValues(alpha: isPlaying ? 0.95 : 0.6),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}

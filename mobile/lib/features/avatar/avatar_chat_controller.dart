@@ -31,6 +31,7 @@ class AvatarChatState {
   final String? conversationId;
   final bool isAudioPlaying;
   final DateTime? playingAt;
+  final ChatRole? playingRole;
 
   const AvatarChatState({
     this.messages = const [],
@@ -39,6 +40,7 @@ class AvatarChatState {
     this.conversationId,
     this.isAudioPlaying = false,
     this.playingAt,
+    this.playingRole,
   });
 
   AvatarChatState copyWith({
@@ -48,6 +50,7 @@ class AvatarChatState {
     String? conversationId,
     bool? isAudioPlaying,
     DateTime? playingAt,
+    ChatRole? playingRole,
     bool clearError = false,
     bool clearPlaying = false,
   }) {
@@ -58,6 +61,7 @@ class AvatarChatState {
       conversationId: conversationId ?? this.conversationId,
       isAudioPlaying: isAudioPlaying ?? this.isAudioPlaying,
       playingAt: clearPlaying ? null : (playingAt ?? this.playingAt),
+      playingRole: clearPlaying ? null : (playingRole ?? this.playingRole),
     );
   }
 }
@@ -101,12 +105,19 @@ class AvatarChatController extends Notifier<AvatarChatState> {
             category: AVAudioSessionCategory.playback,
             options: const {AVAudioSessionOptions.defaultToSpeaker},
           ),
-          android: const AudioContextAndroid(),
+          android: const AudioContextAndroid(
+            isSpeakerphoneOn: false,
+            stayAwake: false,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.media,
+            audioFocus: AndroidAudioFocus.gain,
+            audioMode: AndroidAudioMode.normal,
+          ),
         ),
       );
       _audioContextSet = true;
-    } catch (_) {
-      // best-effort
+    } catch (e) {
+      if (kDebugMode) debugPrint('Audio context set failed: $e');
     }
   }
 
@@ -118,7 +129,7 @@ class AvatarChatController extends Notifier<AvatarChatState> {
       await stopAudio();
       return;
     }
-    await _playBytes(bytes, at: msg.at);
+    await _playBytes(bytes, at: msg.at, role: msg.role);
   }
 
   Future<void> stopAudio() async {
@@ -128,17 +139,25 @@ class AvatarChatController extends Notifier<AvatarChatState> {
     state = state.copyWith(isAudioPlaying: false, clearPlaying: true);
   }
 
-  Future<void> _playBytes(Uint8List bytes, {DateTime? at}) async {
+  Future<void> _playBytes(Uint8List bytes, {DateTime? at, ChatRole? role}) async {
     try {
       await _ensureAudioContext();
+      await _player.stop();
+      await _player.setVolume(1.0);
+      state = state.copyWith(playingAt: at, playingRole: role);
+      // Android-те ылғи DeviceFileSource қолдану — BytesSource кейбір android-те үнсіз болады
       final dir = await Directory.systemTemp.createTemp('ortax_play_');
       final file = File('${dir.path}/audio.mp3');
       await file.writeAsBytes(bytes);
-      await _player.stop();
-      state = state.copyWith(playingAt: at);
+      if (kDebugMode) debugPrint('Playing audio from ${file.path} (${bytes.length} bytes)');
       await _player.play(DeviceFileSource(file.path));
     } catch (e) {
       if (kDebugMode) debugPrint('Audio playback failed: $e');
+      try {
+        await _player.play(BytesSource(bytes));
+      } catch (e2) {
+        if (kDebugMode) debugPrint('Audio playback fallback failed: $e2');
+      }
     }
   }
 
@@ -175,6 +194,12 @@ class AvatarChatController extends Notifier<AvatarChatState> {
     if (state.loading) return;
     state = state.copyWith(loading: true, clearError: true);
 
+    // Локалда жазылған дауысты bytes-қа оқу — replay үшін
+    Uint8List? userAudioBytes;
+    try {
+      userAudioBytes = await audioFile.readAsBytes();
+    } catch (_) {}
+
     try {
       final repo = ref.read(avatarRepositoryProvider);
       final res = await repo.askVoice(
@@ -192,6 +217,7 @@ class AvatarChatController extends Notifier<AvatarChatState> {
           text: res.transcript,
           at: DateTime.now(),
           isVoice: true,
+          audioBytes: userAudioBytes,
         ));
       }
       final avatarMsgAt = DateTime.now();
@@ -212,7 +238,7 @@ class AvatarChatController extends Notifier<AvatarChatState> {
       );
 
       if (replyAudio != null && replyAudio.isNotEmpty) {
-        await _playBytes(replyAudio, at: avatarMsgAt);
+        await _playBytes(replyAudio, at: avatarMsgAt, role: ChatRole.avatar);
       }
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
@@ -220,6 +246,38 @@ class AvatarChatController extends Notifier<AvatarChatState> {
   }
 
   void clear() {
+    state = const AvatarChatState();
+  }
+
+  /// Тарихтан таңдалған сессияны ағымдағы чатқа жүктеу.
+  Future<void> loadConversation(String conversationId) async {
+    await stopAudio();
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final repo = ref.read(avatarRepositoryProvider);
+      final history = await repo.fetchSessionMessages(
+        character: _character,
+        conversationId: conversationId,
+      );
+      final mapped = history
+          .map((m) => ChatMessage(
+                role: m.role == 'assistant' ? ChatRole.avatar : ChatRole.user,
+                text: m.content,
+                at: m.createdAt,
+              ))
+          .toList();
+      state = AvatarChatState(
+        messages: mapped,
+        loading: false,
+        conversationId: conversationId,
+      );
+    } catch (e) {
+      state = state.copyWith(loading: false, error: e.toString());
+    }
+  }
+
+  /// Жаңа әңгіме бастау — өткен conversationId-ден ажырау.
+  void startNewConversation() {
     state = const AvatarChatState();
   }
 }

@@ -25,6 +25,55 @@ class AvatarVoiceReply {
   });
 }
 
+class AvatarHistorySession {
+  final String conversationId;
+  final String lastMessage;
+  final String lastRole;
+  final int messageCount;
+  final DateTime updatedAt;
+  const AvatarHistorySession({
+    required this.conversationId,
+    required this.lastMessage,
+    required this.lastRole,
+    required this.messageCount,
+    required this.updatedAt,
+  });
+
+  factory AvatarHistorySession.fromJson(Map<String, dynamic> json) {
+    return AvatarHistorySession(
+      conversationId: json['conversationId'] as String? ?? '',
+      lastMessage: json['lastMessage'] as String? ?? '',
+      lastRole: json['lastRole'] as String? ?? 'user',
+      messageCount: (json['messageCount'] as num?)?.toInt() ?? 0,
+      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
+          DateTime.now(),
+    );
+  }
+}
+
+class AvatarHistoryMessage {
+  final String id;
+  final String role;
+  final String content;
+  final DateTime createdAt;
+  const AvatarHistoryMessage({
+    required this.id,
+    required this.role,
+    required this.content,
+    required this.createdAt,
+  });
+
+  factory AvatarHistoryMessage.fromJson(Map<String, dynamic> json) {
+    return AvatarHistoryMessage(
+      id: json['id'] as String? ?? '',
+      role: json['role'] as String? ?? 'user',
+      content: json['content'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+    );
+  }
+}
+
 class AvatarCharacter {
   final String id;
   final String displayName;
@@ -80,6 +129,31 @@ class AvatarRepository {
       conversationId: data['conversationId'] as String? ?? '',
       reply: data['reply'] as String? ?? '',
     );
+  }
+
+  Future<List<AvatarHistorySession>> fetchHistory(String character) async {
+    final res = await _dio.get<Map<String, dynamic>>('/avatar/$character/history');
+    final data = res.data ?? const <String, dynamic>{};
+    final list = data['sessions'] as List<dynamic>? ?? const [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(AvatarHistorySession.fromJson)
+        .toList();
+  }
+
+  Future<List<AvatarHistoryMessage>> fetchSessionMessages({
+    required String character,
+    required String conversationId,
+  }) async {
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/avatar/$character/history/$conversationId',
+    );
+    final data = res.data ?? const <String, dynamic>{};
+    final list = data['messages'] as List<dynamic>? ?? const [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(AvatarHistoryMessage.fromJson)
+        .toList();
   }
 
   Future<AvatarVoiceReply> askVoice({
